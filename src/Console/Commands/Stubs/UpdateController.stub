@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Infrastructure\Controller;
+
+use {{namespace}}\Application\Update\Update{{module}}Command;
+use {{namespace}}\Application\Update\Update{{module}}CommandHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+final class Update{{module}}Controller
+{
+    public function __construct(private readonly Update{{module}}CommandHandler $handler) {}
+
+    public function __invoke(string $id, Request $request): JsonResponse
+    {
+        $command = new Update{{module}}Command(
+            $id,
+            $request->input('name') // Adjust arguments as needed
+        );
+
+        ($this->handler)($command);
+
+        return new JsonResponse(null, 204);
+    }
+}

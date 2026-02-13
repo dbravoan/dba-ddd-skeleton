@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Infrastructure\Controller;
+
+use {{namespace}}\Application\Create\Create{{module}}Command;
+use {{namespace}}\Application\Create\Create{{module}}CommandHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+final class Create{{module}}Controller
+{
+    public function __construct(private readonly Create{{module}}CommandHandler $handler) {}
+
+    public function __invoke(Request $request): JsonResponse
+    {
+        $command = new Create{{module}}Command(
+            $request->input('id'),
+            $request->input('name')
+        );
+
+        ($this->handler)($command);
+
+        return new JsonResponse(null, 201);
+    }
+}

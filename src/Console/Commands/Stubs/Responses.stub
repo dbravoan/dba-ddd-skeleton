@@ -1,0 +1,25 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\Response;
+
+final class {{module}}sResponse
+{
+    private array ${{module_lc}}s;
+
+    public function __construct({{module}}Response ...${{module_lc}}s)
+    {
+        $this->{{module_lc}}s = ${{module_lc}}s;
+    }
+
+    public function {{module_lc}}s(): array
+    {
+        return $this->{{module_lc}}s;
+    }
+
+    public function toArray(): array
+    {
+        return array_map(fn({{module}}Response $response) => $response->toArray(), $this->{{module_lc}}s);
+    }
+}

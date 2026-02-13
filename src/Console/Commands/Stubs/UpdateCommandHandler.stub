@@ -1,0 +1,29 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\Update;
+
+use {{namespace}}\Domain\{{module}}Repository;
+use {{namespace}}\Domain\{{module}}Id;
+use {{namespace}}\Domain\{{module}}Name;
+
+final class Update{{module}}CommandHandler
+{
+    public function __construct(private readonly {{module}}Repository $repository) {}
+
+    public function __invoke(Update{{module}}Command $command): void
+    {
+        $id = new {{module}}Id($command->id());
+        ${{module_lc}} = $this->repository->search($id);
+
+        if (null === ${{module_lc}}) {
+            return;
+        }
+
+        // Apply updates
+        // ${{module_lc}}->rename(new {{module}}Name($command->name()));
+
+        $this->repository->save(${{module_lc}});
+    }
+}

@@ -1,0 +1,11 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Domain;
+
+use Dba\DddSkeleton\Shared\Domain\ValueObject\StringValueObject;
+
+final class {{module}}{{Type}} extends StringValueObject
+{
+}

@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\SearchByCriteria;
+
+use {{namespace}}\Application\Response\{{module}}Response;
+use {{namespace}}\Application\Response\{{module}}sResponse;
+use {{namespace}}\Domain\{{module}};
+
+final class Search{{module}}sByCriteriaQueryHandler
+{
+    public function __construct(
+        private readonly {{module}}sByCriteriaSearcher $searcher
+    ) {}
+
+    public function __invoke(Search{{module}}sByCriteriaQuery $query): {{module}}sResponse
+    {
+        $entities = $this->searcher->search($query->criteria());
+
+        $responses = array_map(
+            fn({{module}} $entity) => {{module}}Response::fromAggregate($entity),
+            $entities
+        );
+    }
+}

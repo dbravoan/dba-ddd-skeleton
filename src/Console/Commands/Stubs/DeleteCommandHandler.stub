@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\Delete;
+
+use {{namespace}}\Domain\{{module}}Repository;
+use {{namespace}}\Domain\{{module}}Id;
+
+final class Delete{{module}}CommandHandler
+{
+    public function __construct(private readonly {{module}}Repository $repository) {}
+
+    public function __invoke(Delete{{module}}Command $command): void
+    {
+        $this->repository->delete(new {{module}}Id($command->id()));
+    }
+}

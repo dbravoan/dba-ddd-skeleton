@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Infrastructure\Controller;
+
+use {{namespace}}\Application\SearchByCriteria\Count{{module}}sByCriteriaQuery;
+use {{namespace}}\Application\SearchByCriteria\Count{{module}}sByCriteriaQueryHandler;
+use {{namespace}}\Application\SearchByCriteria\Search{{module}}sByCriteriaQuery;
+use {{namespace}}\Application\SearchByCriteria\Search{{module}}sByCriteriaQueryHandler;
+use {{namespace}}\Domain\{{module}};
+use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
+use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
+use Dba\DddSkeleton\Shared\Infrastructure\Criteria\RequestCriteriaBuilder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use function Lambdish\Phunctional\map;
+
+final class Search{{module}}sByCriteriaController
+{
+    public function __construct(
+        private readonly RequestCriteriaBuilder $requestCriteriaBuilder,
+        private readonly Search{{module}}sByCriteriaQueryHandler $searcher, // Uses Handler!
+        private readonly Count{{module}}sByCriteriaQueryHandler $counter
+    ) {}
+
+    public function __invoke(Request $request): JsonResponse
+    {
+        $criteria = $this->requestCriteriaBuilder->buildFromRequest($request);
+        ));
+
+        $currentPage = $limit ? (int) floor($offset / $limit) + 1 : 1;
+        $totalPages = $limit ? (int) ceil($filteredRecords / $limit) : 1;
+
+        return new JsonResponse([
+            'records' => map(fn({{module}} $model) => $model->toPrimitives(), $articles),
+            'meta' => [
+                'current_page' => $currentPage,
+                'total_pages' => $totalPages,
+                'filtered_records' => $filteredRecords,
+                'total_records' => $totalRecords,
+                'per_page' => $limit,
+                'limit' => $limit,
+                'offset' => $offset
+            ]
+        ], 200);
+    }
+}

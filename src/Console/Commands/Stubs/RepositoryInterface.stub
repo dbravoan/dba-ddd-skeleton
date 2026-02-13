@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Domain;
+
+use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
+
+interface {{module}}Repository
+{
+    public function save({{module}} $model): void;
+
+    public function delete({{module}}Id $id): void;
+
+    public function search({{module}}Id $id): ?{{module}};
+
+    public function searchByCriteria(Criteria $criteria): array;
+
+    public function countByCriteria(Criteria $criteria): int;
+}

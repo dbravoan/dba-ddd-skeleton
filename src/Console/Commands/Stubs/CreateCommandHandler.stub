@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\Create;
+
+use {{namespace}}\Domain\{{module}};
+use {{namespace}}\Domain\{{module}}Id;
+use {{namespace}}\Domain\{{module}}Name;
+use {{namespace}}\Domain\{{module}}Repository;
+
+final class Create{{module}}CommandHandler
+{
+    public function __construct(private readonly {{module}}Repository $repository) {}
+
+    public function __invoke(Create{{module}}Command $command): void
+    {
+        $id = new {{module}}Id($command->id());
+        $name = new {{module}}Name($command->name());
+        $model = {{module}}::create($id, $name);
+
+        $this->repository->save($model);
+    }
+}

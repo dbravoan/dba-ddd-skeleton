@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Infrastructure\Controller;
+
+use {{namespace}}\Application\Find\Find{{module}}Query;
+use {{namespace}}\Application\Find\Find{{module}}QueryHandler;
+use Illuminate\Http\JsonResponse;
+
+final class Find{{module}}Controller
+{
+    public function __construct(private readonly Find{{module}}QueryHandler $handler) {}
+
+    public function __invoke(string $id): JsonResponse
+    {
+        /** @var \{{namespace}}\Application\Response\{{module}}Response|null $response */
+        $response = $this->ask(new Find{{module}}Query($id));
+
+        if (null === $response) {
+            return new JsonResponse(['error' => 'Not found'], 404);
+        }
+
+        return new JsonResponse($response->toArray(), 200);
+    }
+}

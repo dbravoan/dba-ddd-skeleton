@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Infrastructure\Controller;
+
+use {{namespace}}\Application\Delete\Delete{{module}}Command;
+use {{namespace}}\Application\Delete\Delete{{module}}CommandHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+final class Delete{{module}}Controller
+{
+    public function __construct(private readonly Delete{{module}}CommandHandler $handler) {}
+
+    public function __invoke(string $id): JsonResponse
+    {
+        ($this->handler)(new Delete{{module}}Command($id));
+
+        return new JsonResponse(null, 204);
+    }
+}

@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\{{context}}\{{module}}\Application\SearchByCriteria;
+
+use {{namespace}}\{{context}}\{{module}}\Domain\{{module}}Repository;
+use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
+use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
+use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
+
+final class Count{{module}}sByCriteriaQueryHandler
+{
+    public function __construct(private readonly {{module}}Repository $repository) {}
+
+    public function __invoke(Count{{module}}sByCriteriaQuery $query): int
+    {
+        $criteria = new Criteria(
+            $query->filters(),
+            $query->order(),
+            $query->offset(),
+            $query->limit()
+        );
+
+        return $this->repository->countByCriteria($criteria);
+    }
+}

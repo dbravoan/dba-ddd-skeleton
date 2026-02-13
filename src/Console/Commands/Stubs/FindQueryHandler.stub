@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\Find;
+
+use {{namespace}}\Application\Response\{{module}}Response;
+use {{namespace}}\Domain\{{module}};
+use {{namespace}}\Domain\{{module}}Id;
+use {{namespace}}\Domain\{{module}}Repository;
+
+final class Find{{module}}QueryHandler
+{
+    public function __construct(private readonly {{module}}Repository $repository) {}
+
+    public function __invoke(Find{{module}}Query $query): ?{{module}}Response
+    {
+        $id = new {{module}}Id($query->id());
+        $entity = $this->repository->find($id);
+
+        return $entity ? {{module}}Response::fromAggregate($entity) : null;
+    }
+}

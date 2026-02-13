@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Domain;
+
+use Dba\DddSkeleton\Shared\Domain\Aggregate\AggregateRoot;
+
+final class {{module}} extends AggregateRoot
+{
+    public function __construct(
+        private readonly {{module}}Id $id,
+        private readonly {{module}}Name $name
+    ) {}
+
+    public static function create({{module}}Id $id, {{module}}Name $name): self
+    {
+        $model = new self($id, $name);
+        // $model->record(new {{module}}Created($id->value()));
+        return $model;
+    }
+
+    public function id(): {{module}}Id
+    {
+        return $this->id;
+    }
+
+    public function name(): {{module}}Name
+    {
+        return $this->name;
+    }
+
+    public function toPrimitives(): array
+    {
+        return [
+            'id' => $this->id->value(),
+            'name' => $this->name->value(),
+        ];
+    }
+}

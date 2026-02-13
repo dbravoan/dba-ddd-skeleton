@@ -1,0 +1,7 @@
+/tests export-ignore
+/phpunit.xml export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/walkthrough.md export-ignore
+/implementation_plan.md export-ignore
+/task.md export-ignore

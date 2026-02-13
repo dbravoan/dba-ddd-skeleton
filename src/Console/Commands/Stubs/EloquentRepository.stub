@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Infrastructure\Persistence;
+
+use {{namespace}}\Domain\{{module}};
+use {{namespace}}\Domain\{{module}}Id;
+use {{namespace}}\Domain\{{module}}Repository;
+use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentRepository;
+use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
+
+final class Eloquent{{module}}Repository extends EloquentRepository implements {{module}}Repository
+{
+    public function save({{module}} $model): void
+    {
+        $this->model()->updateOrCreate(
+            ['id' => $model->id()->value()],
+            $model->toPrimitives()
+        );
+    }
+
+    public function delete({{module}}Id $id): void
+    {
+        $this->model()->destroy($id->value());
+    }
+
+    public function search({{module}}Id $id): ?{{module}}
+    {
+        $model = $this->model()->find($id->value());
+        return $model ? $this->toDomain($model) : null;
+    }
+
+    public function searchByCriteria(Criteria $criteria): array
+    {
+        // Use default implementation or override
+        return [];
+    }
+
+    public function countByCriteria(Criteria $criteria): int
+    {
+         // Use default implementation or override
+         return 0;
+    }
+    
+    // Abstract method implementation... need to map properly
+}

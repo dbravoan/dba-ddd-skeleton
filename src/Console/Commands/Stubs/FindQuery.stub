@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\Find;
+
+final class Find{{module}}Query
+{
+    public function __construct(private readonly string $id) {}
+
+    public function id(): string
+    {
+        return $this->id;
+    }
+}
