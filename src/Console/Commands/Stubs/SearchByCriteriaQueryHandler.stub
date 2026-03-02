@@ -7,6 +7,8 @@ namespace {{namespace}}\Application\SearchByCriteria;
 use {{namespace}}\Application\Response\{{module}}Response;
 use {{namespace}}\Application\Response\{{module}}sResponse;
 use {{namespace}}\Domain\{{module}};
+use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
+use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
 
 final class Search{{module}}sByCriteriaQueryHandler
 {
@@ -16,11 +18,21 @@ final class Search{{module}}sByCriteriaQueryHandler
 
     public function __invoke(Search{{module}}sByCriteriaQuery $query): {{module}}sResponse
     {
-        $entities = $this->searcher->search($query->criteria());
+        $filters = Filters::fromValues($query->filters());
+        $order = Order::fromValues($query->orderBy(), $query->orderType());
+
+        $entities = $this->searcher->search(
+            $filters,
+            $order,
+            $query->limit(),
+            $query->offset()
+        );
 
         $responses = array_map(
             fn({{module}} $entity) => {{module}}Response::fromAggregate($entity),
             $entities
         );
+
+        return new {{module}}sResponse(...$responses);
     }
 }

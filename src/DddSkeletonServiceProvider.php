@@ -29,9 +29,8 @@ final class DddSkeletonServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        // Register the Example Repository Provider (Optional, for demonstration)
-        // In a real app, the user would register their own.
-        $this->app->register(\Dba\DddSkeleton\BoundedContextExample\Shared\Infrastructure\Laravel\Providers\RepositoryServiceProvider::class);
+        // Register the Example Repository Provider
+        $this->app->register(\Dba\DddSkeleton\Shared\Infrastructure\Laravel\Providers\RepositoryServiceProvider::class);
 
         $this->registerBuses();
     }
@@ -41,14 +40,14 @@ final class DddSkeletonServiceProvider extends ServiceProvider
         $this->app->singleton(CommandBus::class, function ($app) {
             return new LaravelCommandBus(
                 $app->make(Dispatcher::class),
-                [] // Handlers will be injected here via tagging or configuration in the final app
+                $app->tagged('dba_ddd.command_handler')
             );
         });
 
         $this->app->singleton(QueryBus::class, function ($app) {
             return new LaravelQueryBus(
                 $app->make(Dispatcher::class),
-                [] // Handlers will be injected here via tagging or configuration in the final app
+                $app->tagged('dba_ddd.query_handler')
             );
         });
     }

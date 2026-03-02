@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace {{namespace}}\Application\Response;
 
 use {{namespace}}\Domain\{{module}};
-
-final class {{module}}Response
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
+ 
+final class {{module}}Response implements Response
 {
     private string $id;
     private string $name;
-    private string $created_at;
 
-    public function __construct(string $id, string $name, string $created_at)
+    public function __construct(string $id, string $name)
     {
         $this->id         = $id;
         $this->name       = $name;
@@ -25,7 +25,6 @@ final class {{module}}Response
             ${{module_lc}}->id()->value(),
             ${{module_lc}}->name()->value(),
             // Add other fields here mapping from aggregate
-            '2024-01-01', // Placeholder for dates if not yet in VO
         );
     }
 
@@ -34,7 +33,6 @@ final class {{module}}Response
         return [
             'id'         => $this->id,
             'name'       => $this->name,
-            'created_at' => $this->created_at,
         ];
     }
 }

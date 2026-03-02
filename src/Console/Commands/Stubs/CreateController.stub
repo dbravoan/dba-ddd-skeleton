@@ -6,10 +6,11 @@ namespace {{namespace}}\Infrastructure\Controller;
 
 use {{namespace}}\Application\Create\Create{{module}}Command;
 use {{namespace}}\Application\Create\Create{{module}}CommandHandler;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class Create{{module}}Controller
+final class Create{{module}}Controller extends ApiController
 {
     public function __construct(private readonly Create{{module}}CommandHandler $handler) {}
 
@@ -22,6 +23,6 @@ final class Create{{module}}Controller
 
         ($this->handler)($command);
 
-        return new JsonResponse(null, 201);
+        return $this->sendResponse(null, '{{module}} created successfully');
     }
 }

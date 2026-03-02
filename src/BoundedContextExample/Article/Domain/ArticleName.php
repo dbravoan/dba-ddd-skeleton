@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\BoundedContextExample\Article\Domain;
 
-final class ArticleName
-{
-    public function __construct(private readonly string $value) {}
+use Dba\DddSkeleton\Shared\Domain\ValueObject\StringValueObject;
 
-    public function value(): string
-    {
-        return $this->value;
-    }
-}
+final class ArticleName extends StringValueObject {}

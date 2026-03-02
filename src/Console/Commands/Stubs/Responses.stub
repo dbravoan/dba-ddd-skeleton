@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Application\Response;
 
-final class {{module}}sResponse
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
+ 
+final class {{module}}sResponse implements Response
 {
     private array ${{module_lc}}s;
 

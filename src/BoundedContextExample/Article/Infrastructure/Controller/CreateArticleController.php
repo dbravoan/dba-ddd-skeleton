@@ -6,10 +6,11 @@ namespace Dba\DddSkeleton\BoundedContextExample\Article\Infrastructure\Controlle
 
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Create\CreateArticleCommand;
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Create\CreateArticleCommandHandler;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class CreateArticleController
+final class CreateArticleController extends ApiController
 {
     public function __construct(private readonly CreateArticleCommandHandler $handler) {}
 
@@ -24,6 +25,6 @@ final class CreateArticleController
 
         ($this->handler)($command);
 
-        return new JsonResponse(null, 201);
+        return $this->sendResponse(null, 'Article created successfully');
     }
 }

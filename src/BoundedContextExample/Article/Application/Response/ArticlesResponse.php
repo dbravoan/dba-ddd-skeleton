@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\BoundedContextExample\Article\Application\Response;
 
-final class ArticlesResponse
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
+
+final class ArticlesResponse implements Response
 {
     private array $articles;
 

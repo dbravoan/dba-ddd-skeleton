@@ -14,20 +14,20 @@ final class Eloquent{{module}}Repository extends EloquentRepository implements {
 {
     public function save({{module}} $model): void
     {
-        $this->model()->updateOrCreate(
+        $this->model->updateOrCreate(
             ['id' => $model->id()->value()],
             $model->toPrimitives()
         );
     }
 
-    public function delete({{module}}Id $id): void
+    public function remove({{module}}Id $id): void
     {
-        $this->model()->destroy($id->value());
+        $this->model->destroy($id->value());
     }
 
     public function search({{module}}Id $id): ?{{module}}
     {
-        $model = $this->model()->find($id->value());
+        $model = $this->model->find($id->value());
         return $model ? $this->toDomain($model) : null;
     }
 

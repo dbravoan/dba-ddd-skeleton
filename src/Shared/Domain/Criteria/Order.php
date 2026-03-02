@@ -11,6 +11,14 @@ final class Order
         private readonly OrderType $orderType
     ) {}
 
+    public static function fromValues(?string $orderBy, ?string $orderType): self
+    {
+        $orderBy = $orderBy ? new OrderBy($orderBy) : new OrderBy('');
+        $orderType = $orderType ? new OrderType($orderType) : OrderType::none();
+
+        return new self($orderBy, $orderType);
+    }
+
     public static function createDesc(OrderBy $orderBy): self
     {
         return new self($orderBy, OrderType::desc());

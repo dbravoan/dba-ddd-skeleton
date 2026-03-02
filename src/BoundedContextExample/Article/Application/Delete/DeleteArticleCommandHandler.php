@@ -13,6 +13,6 @@ final class DeleteArticleCommandHandler
 
     public function __invoke(DeleteArticleCommand $command): void
     {
-        $this->repository->delete(new ArticleId($command->id()));
+        $this->repository->remove(new ArticleId($command->id()));
     }
 }

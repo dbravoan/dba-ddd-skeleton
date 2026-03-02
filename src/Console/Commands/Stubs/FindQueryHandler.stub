@@ -16,7 +16,7 @@ final class Find{{module}}QueryHandler
     public function __invoke(Find{{module}}Query $query): ?{{module}}Response
     {
         $id = new {{module}}Id($query->id());
-        $entity = $this->repository->find($id);
+        $entity = $this->repository->search($id);
 
         return $entity ? {{module}}Response::fromAggregate($entity) : null;
     }

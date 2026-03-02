@@ -10,7 +10,7 @@ interface {{module}}Repository
 {
     public function save({{module}} $model): void;
 
-    public function delete({{module}}Id $id): void;
+    public function remove({{module}}Id $id): void;
 
     public function search({{module}}Id $id): ?{{module}};
 

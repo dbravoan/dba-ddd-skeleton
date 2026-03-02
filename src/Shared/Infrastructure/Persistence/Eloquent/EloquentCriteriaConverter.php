@@ -46,8 +46,8 @@ final class EloquentCriteriaConverter
 
     private function buildExpression(Criteria $criteria): void
     {
-        if ($criteria->hasFilters()) {
-            array_map($this->buildComparison(), $criteria->plainFilters());
+        if (!empty($criteria->filters()->filters())) {
+            array_map($this->buildComparison(), $criteria->filters()->filters());
         }
     }
 
@@ -55,7 +55,7 @@ final class EloquentCriteriaConverter
     {
         return function ($filter_or_group) {
             if ($filter_or_group instanceof FilterGroup) {
-                $glue = $this->criteria->glue() === 'or' ? 'orWhere' : 'where';
+                $glue = strtolower($this->criteria->glue()) === 'or' ? 'orWhere' : 'where';
 
                 $this->eloquent_criteria->{$glue}(function ($query) use ($filter_or_group) {
                     foreach ($filter_or_group->filters() as $index => $filter) {
@@ -63,7 +63,8 @@ final class EloquentCriteriaConverter
                     }
                 });
             } else {
-                $this->applyFilter($this->eloquent_criteria, $filter_or_group, $this->criteria->glue());
+                $glue = strtolower($this->criteria->glue()) === 'or' ? 'orWhere' : 'where';
+                $this->applyFilter($this->eloquent_criteria, $filter_or_group, strtolower($this->criteria->glue()));
             }
         };
     }

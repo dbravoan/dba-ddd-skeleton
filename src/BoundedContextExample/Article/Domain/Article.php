@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\BoundedContextExample\Article\Domain;
 
-final class Article
+use Dba\DddSkeleton\Shared\Domain\Aggregate\AggregateRoot;
+
+final class Article extends AggregateRoot
 {
     public function __construct(
         private readonly ArticleId $id,

@@ -4,26 +4,29 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\BoundedContextExample\Article\Application\SearchByCriteria;
 
-use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
-use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
-
 final class CountArticlesByCriteriaQuery
 {
     public function __construct(
-        private readonly Filters $filters,
-        private readonly Order $order,
+        private readonly array $filters,
+        private readonly ?string $orderBy,
+        private readonly ?string $orderType,
         private readonly ?int $limit,
         private readonly ?int $offset
     ) {}
 
-    public function filters(): Filters
+    public function filters(): array
     {
         return $this->filters;
     }
 
-    public function order(): Order
+    public function orderBy(): ?string
     {
-        return $this->order;
+        return $this->orderBy;
+    }
+
+    public function orderType(): ?string
+    {
+        return $this->orderType;
     }
 
     public function limit(): ?int

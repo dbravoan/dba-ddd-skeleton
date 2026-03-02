@@ -6,10 +6,11 @@ namespace {{namespace}}\Infrastructure\Controller;
 
 use {{namespace}}\Application\Update\Update{{module}}Command;
 use {{namespace}}\Application\Update\Update{{module}}CommandHandler;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class Update{{module}}Controller
+final class Update{{module}}Controller extends ApiController
 {
     public function __construct(private readonly Update{{module}}CommandHandler $handler) {}
 
@@ -22,6 +23,6 @@ final class Update{{module}}Controller
 
         ($this->handler)($command);
 
-        return new JsonResponse(null, 204);
+        return $this->sendResponse(null, '{{module}} updated successfully');
     }
 }

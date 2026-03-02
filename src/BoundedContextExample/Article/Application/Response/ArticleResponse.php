@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Dba\DddSkeleton\BoundedContextExample\Article\Application\Response;
 
 use Dba\DddSkeleton\BoundedContextExample\Article\Domain\Article;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
 
-final class ArticleResponse
+final class ArticleResponse implements Response
 {
     private string $id;
     private string $name;

@@ -12,37 +12,65 @@ use {{namespace}}\Domain\{{module}};
 use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
 use Dba\DddSkeleton\Shared\Infrastructure\Criteria\RequestCriteriaBuilder;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use function Lambdish\Phunctional\map;
 
-final class Search{{module}}sByCriteriaController
+final class Search{{module}}sByCriteriaController extends ApiController
 {
     public function __construct(
         private readonly RequestCriteriaBuilder $requestCriteriaBuilder,
-        private readonly Search{{module}}sByCriteriaQueryHandler $searcher, // Uses Handler!
+        private readonly Search{{module}}sByCriteriaQueryHandler $searcher,
         private readonly Count{{module}}sByCriteriaQueryHandler $counter
     ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
         $criteria = $this->requestCriteriaBuilder->buildFromRequest($request);
+        $offset = (int) $criteria->offset();
+        $limit = $criteria->limit();
+
+        $searchQuery = new Search{{module}}sByCriteriaQuery(
+            $request->get('filters', []),
+            $criteria->order()->orderBy()?->value(),
+            $criteria->order()->orderType()?->value(),
+            $limit,
+            $offset
+        );
+
+        /** @var {{module}}sResponse ${{module_lc}}sResponse */
+        ${{module_lc}}sResponse = ($this->searcher)($searchQuery);
+
+        $filteredRecords = ($this->counter)(new Count{{module}}sByCriteriaQuery(
+            $request->get('filters', []),
+            null,
+            null,
+            null,
+            null
+        ));
+
+        $totalRecords = ($this->counter)(new Count{{module}}sByCriteriaQuery(
+            [],
+            null,
+            null,
+            null,
+            null
         ));
 
         $currentPage = $limit ? (int) floor($offset / $limit) + 1 : 1;
         $totalPages = $limit ? (int) ceil($filteredRecords / $limit) : 1;
 
-        return new JsonResponse([
-            'records' => map(fn({{module}} $model) => $model->toPrimitives(), $articles),
+        $response = [
+            'data' => ${{module_lc}}sResponse->toArray(),
             'meta' => [
                 'current_page' => $currentPage,
                 'total_pages' => $totalPages,
                 'filtered_records' => $filteredRecords,
                 'total_records' => $totalRecords,
-                'per_page' => $limit,
-                'limit' => $limit,
-                'offset' => $offset
+                'per_page' => $limit
             ]
-        ], 200);
+        ];
+
+        return $this->sendResponse($response, '{{module}}s searched successfully');
     }
 }

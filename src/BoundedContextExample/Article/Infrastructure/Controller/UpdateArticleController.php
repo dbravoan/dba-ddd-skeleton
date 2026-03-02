@@ -6,10 +6,11 @@ namespace Dba\DddSkeleton\BoundedContextExample\Article\Infrastructure\Controlle
 
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Update\UpdateArticleCommand;
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Update\UpdateArticleCommandHandler;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class UpdateArticleController
+final class UpdateArticleController extends ApiController
 {
     public function __construct(private readonly UpdateArticleCommandHandler $handler) {}
 
@@ -24,6 +25,6 @@ final class UpdateArticleController
 
         ($this->handler)($command);
 
-        return new JsonResponse(null, 200);
+        return $this->sendResponse(null, 'Article updated successfully');
     }
 }

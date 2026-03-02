@@ -16,7 +16,7 @@ final class SearchArticlesByCriteriaQueryHandler
 
     public function __invoke(SearchArticlesByCriteriaQuery $query): ArticlesResponse
     {
-        $filters = new Filters($query->filters());
+        $filters = Filters::fromValues($query->filters());
         $order = Order::fromValues($query->orderBy(), $query->orderType());
 
         $entities = $this->searcher->search(

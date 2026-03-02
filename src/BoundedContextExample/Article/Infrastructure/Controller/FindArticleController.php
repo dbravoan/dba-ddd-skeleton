@@ -6,9 +6,10 @@ namespace Dba\DddSkeleton\BoundedContextExample\Article\Infrastructure\Controlle
 
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Find\FindArticleQuery;
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Find\FindArticleQueryHandler;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 
-final class FindArticleController
+final class FindArticleController extends ApiController
 {
     public function __construct(private readonly FindArticleQueryHandler $handler) {}
 
@@ -18,9 +19,9 @@ final class FindArticleController
         $response = ($this->handler)(new FindArticleQuery($id));
 
         if (null === $response) {
-            return new JsonResponse(['error' => 'Not Found'], 404);
+            return $this->sendError('Not Found', [], 404);
         }
 
-        return new JsonResponse($response->toArray(), 200);
+        return $this->sendResponse($response->toArray(), 'Article found successfully');
     }
 }

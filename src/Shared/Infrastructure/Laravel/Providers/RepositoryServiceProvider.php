@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dba\DddSkeleton\BoundedContextExample\Shared\Infrastructure\Laravel\Providers;
+namespace Dba\DddSkeleton\Shared\Infrastructure\Laravel\Providers;
 
 use Dba\DddSkeleton\BoundedContextExample\Article\Domain\ArticleRepository;
 use Dba\DddSkeleton\BoundedContextExample\Article\Infrastructure\Persistence\EloquentArticleRepository;

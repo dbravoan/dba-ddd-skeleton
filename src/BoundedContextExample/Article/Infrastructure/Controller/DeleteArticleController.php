@@ -6,9 +6,10 @@ namespace Dba\DddSkeleton\BoundedContextExample\Article\Infrastructure\Controlle
 
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Delete\DeleteArticleCommand;
 use Dba\DddSkeleton\BoundedContextExample\Article\Application\Delete\DeleteArticleCommandHandler;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 
-final class DeleteArticleController
+final class DeleteArticleController extends ApiController
 {
     public function __construct(private readonly DeleteArticleCommandHandler $handler) {}
 
@@ -16,6 +17,6 @@ final class DeleteArticleController
     {
         ($this->handler)(new DeleteArticleCommand($id));
 
-        return new JsonResponse(null, 204);
+        return $this->sendResponse(null, 'Article deleted successfully');
     }
 }

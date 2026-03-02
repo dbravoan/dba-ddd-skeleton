@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace {{namespace}}\{{context}}\{{module}}\Application\SearchByCriteria;
+namespace {{namespace}}\Application\SearchByCriteria;
 
-use {{namespace}}\{{context}}\{{module}}\Domain\{{module}}Repository;
+use {{namespace}}\Domain\{{module}}Repository;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;

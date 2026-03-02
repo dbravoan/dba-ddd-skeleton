@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace {{namespace}}\{{context}}\{{module}}\Application\SearchByCriteria;
+namespace {{namespace}}\Application\SearchByCriteria;
 
-use {{namespace}}\{{context}}\{{module}}\Domain\{{module}}Repository;
+use {{namespace}}\Domain\{{module}}Repository;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\CountResponse;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
@@ -13,15 +14,18 @@ final class Count{{module}}sByCriteriaQueryHandler
 {
     public function __construct(private readonly {{module}}Repository $repository) {}
 
-    public function __invoke(Count{{module}}sByCriteriaQuery $query): int
+    public function __invoke(Count{{module}}sByCriteriaQuery $query): CountResponse
     {
+        $filters = Filters::fromValues($query->filters());
+        $order = Order::fromValues($query->orderBy(), $query->orderType());
+ 
         $criteria = new Criteria(
-            $query->filters(),
-            $query->order(),
+            $filters,
+            $order,
             $query->offset(),
             $query->limit()
         );
 
-        return $this->repository->countByCriteria($criteria);
+        return new CountResponse($this->repository->countByCriteria($criteria));
     }
 }

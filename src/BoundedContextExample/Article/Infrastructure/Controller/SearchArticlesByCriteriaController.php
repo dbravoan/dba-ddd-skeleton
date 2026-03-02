@@ -11,10 +11,11 @@ use Dba\DddSkeleton\BoundedContextExample\Article\Application\SearchByCriteria\C
 use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
 use Dba\DddSkeleton\Shared\Infrastructure\Criteria\RequestCriteriaBuilder;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class SearchArticlesByCriteriaController
+final class SearchArticlesByCriteriaController extends ApiController
 {
     public function __construct(
         private readonly RequestCriteriaBuilder $requestCriteriaBuilder,
@@ -29,8 +30,9 @@ final class SearchArticlesByCriteriaController
         $limit = $criteria->limit();
 
         $searchQuery = new SearchArticlesByCriteriaQuery(
-            $criteria->filters(),
-            $criteria->order(),
+            $request->get('filters', []),
+            $criteria->order()->orderBy()?->value(),
+            $criteria->order()->orderType()?->value(),
             $limit,
             $offset
         );
@@ -39,15 +41,17 @@ final class SearchArticlesByCriteriaController
         $articlesResponse = ($this->searcher)($searchQuery);
 
         $filteredRecords = ($this->counter)(new CountArticlesByCriteriaQuery(
-            $criteria->filters(),
-            Order::none(),
+            $request->get('filters', []),
+            null,
+            null,
             null,
             null
         ));
 
         $totalRecords = ($this->counter)(new CountArticlesByCriteriaQuery(
-            new Filters([]),
-            Order::none(),
+            [],
+            null,
+            null,
             null,
             null
         ));
@@ -55,15 +59,17 @@ final class SearchArticlesByCriteriaController
         $currentPage = $limit ? (int) floor($offset / $limit) + 1 : 1;
         $totalPages = $limit ? (int) ceil($filteredRecords / $limit) : 1;
 
-        return new JsonResponse([
-            'records' => $articlesResponse->toArray(),
+        $response = [
+            'data' => $articlesResponse->toArray(),
             'meta' => [
                 'current_page' => $currentPage,
                 'total_pages' => $totalPages,
                 'filtered_records' => $filteredRecords,
                 'total_records' => $totalRecords,
                 'per_page' => $limit
-            ]
-        ], 200);
+            ],
+        ];
+
+        return $this->sendResponse($response, 'Articles searched successfully');
     }
 }

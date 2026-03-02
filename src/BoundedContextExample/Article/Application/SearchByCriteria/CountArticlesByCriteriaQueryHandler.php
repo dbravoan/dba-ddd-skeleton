@@ -8,15 +8,24 @@ use Dba\DddSkeleton\BoundedContextExample\Article\Domain\ArticleRepository;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\CountResponse;
 
-final class ArticlesByCriteriaCounter
+final class CountArticlesByCriteriaQueryHandler
 {
     public function __construct(private readonly ArticleRepository $repository) {}
 
-    public function __invoke(Filters $filters, Order $order, ?int $limit, ?int $offset): int
+    public function __invoke(CountArticlesByCriteriaQuery $query): CountResponse
     {
-        $criteria = new Criteria($filters, $order, $offset, $limit);
+        $filters = Filters::fromValues($query->filters());
+        $order = Order::fromValues($query->orderBy(), $query->orderType());
 
-        return $this->repository->countByCriteria($criteria);
+        $criteria = new Criteria(
+            $filters,
+            $order,
+            $query->offset(),
+            $query->limit()
+        );
+
+        return new CountResponse($this->repository->countByCriteria($criteria));
     }
 }
