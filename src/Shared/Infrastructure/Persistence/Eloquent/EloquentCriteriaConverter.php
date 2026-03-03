@@ -83,12 +83,21 @@ final class EloquentCriteriaConverter
             $query->{$glueMethod}($field, 'NOT LIKE', '%' . $value . '%');
         } elseif ($filter->operator()->value() === FilterOperator::IN) {
             $query->{$glueMethod . 'In'}($field, explode(',', $value));
+        } elseif ($filter->operator()->value() === FilterOperator::NOT_IN) {
+            $query->{$glueMethod . 'NotIn'}($field, explode(',', $value));
         } elseif ($filter->operator()->value() === FilterOperator::BETWEEN) {
             $values = explode(',', $value);
             if (count($values) === 2) {
                 $query->{$glueMethod . 'Between'}($field, [$values[0], $values[1]]);
             } else {
                 throw new \InvalidArgumentException('BETWEEN operator requires two values');
+            }
+        } elseif ($filter->operator()->value() === FilterOperator::NOT_BETWEEN) {
+            $values = explode(',', $value);
+            if (count($values) === 2) {
+                $query->{$glueMethod . 'NotBetween'}($field, [$values[0], $values[1]]);
+            } else {
+                throw new \InvalidArgumentException('NOT_BETWEEN operator requires two values');
             }
         } elseif ($filter->operator()->value() === FilterOperator::STARTS_WITH) {
             $query->{$glueMethod}($field, 'LIKE', $value . '%');
@@ -108,6 +117,10 @@ final class EloquentCriteriaConverter
             } elseif ($filter->operator()->value() === FilterOperator::NOT_EQUAL) {
                 $query->{$glueMethod . 'NotNull'}($field);
             }
+        } elseif ($filter->operator()->value() === FilterOperator::IS_NULL) {
+            $query->{$glueMethod . 'Null'}($field);
+        } elseif ($filter->operator()->value() === FilterOperator::IS_NOT_NULL) {
+            $query->{$glueMethod . 'NotNull'}($field);
         } else {
             $query->{$glueMethod}($field, $filter->operator()->value(), $value);
         }
