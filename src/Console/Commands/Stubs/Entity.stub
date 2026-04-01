@@ -16,7 +16,8 @@ final class {{module}} extends AggregateRoot
     public static function create({{module}}Id $id, {{module}}Name $name): self
     {
         $model = new self($id, $name);
-        // $model->record(new {{module}}Created($id->value()));
+        $model->record(new {{module}}CreatedDomainEvent($id->value(), $name->value()));
+
         return $model;
     }
 
@@ -28,6 +29,14 @@ final class {{module}} extends AggregateRoot
     public function name(): {{module}}Name
     {
         return $this->name;
+    }
+
+    public static function fromPrimitives(array $primitives): self
+    {
+        return new self(
+            new {{module}}Id($primitives['id']),
+            new {{module}}Name($primitives['name'])
+        );
     }
 
     public function toPrimitives(): array

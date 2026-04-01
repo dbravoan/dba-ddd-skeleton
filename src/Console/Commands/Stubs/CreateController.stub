@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace {{namespace}}\Infrastructure\Controller;
 
 use {{namespace}}\Application\Create\Create{{module}}Command;
-use {{namespace}}\Application\Create\Create{{module}}CommandHandler;
+use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class Create{{module}}Controller extends ApiController
 {
-    public function __construct(private readonly Create{{module}}CommandHandler $handler) {}
+    public function __construct(private readonly CommandBus $bus) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -21,7 +21,7 @@ final class Create{{module}}Controller extends ApiController
             $request->input('name')
         );
 
-        ($this->handler)($command);
+        $this->bus->dispatch($command);
 
         return $this->sendResponse(null, '{{module}} created successfully');
     }

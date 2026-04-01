@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 final class MakeModuleCommand extends Command
 {
     protected $signature = 'dba:make:module {context : The name of the Bounded Context} {module : The name of the Module}
+                            {--root-namespace= : The root namespace (default: Dba\DddSkeleton)}
                             {--no-finder : Skip generating Finder classes}
                             {--no-creator : Skip generating Creator classes}
                             {--no-updater : Skip generating Updater classes}
@@ -60,6 +61,8 @@ final class MakeModuleCommand extends Command
     {
         // Entity
         $this->createFile("$basePath/Domain/{$module}.php", $this->getStub('Entity', $context, $module));
+        // Domain Event
+        $this->createFile("$basePath/Domain/{$module}CreatedDomainEvent.php", $this->getStub('CreatedDomainEvent', $context, $module));
         // Value Objects
         $this->createFile("$basePath/Domain/{$module}Id.php", $this->getStub('ValueObject', $context, $module, ['Type' => 'Id']));
         $this->createFile("$basePath/Domain/{$module}Name.php", $this->getStub('ValueObject', $context, $module, ['Type' => 'Name']));

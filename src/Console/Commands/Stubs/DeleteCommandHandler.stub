@@ -6,8 +6,9 @@ namespace {{namespace}}\Application\Delete;
 
 use {{namespace}}\Domain\{{module}}Repository;
 use {{namespace}}\Domain\{{module}}Id;
+use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandHandler;
 
-final class Delete{{module}}CommandHandler
+final class Delete{{module}}CommandHandler implements CommandHandler
 {
     public function __construct(private readonly {{module}}Repository $repository) {}
 

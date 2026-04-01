@@ -38,4 +38,14 @@ final class Criteria
     {
         return $this->glue;
     }
+
+    public function hasFilters(): bool
+    {
+        return $this->filters->count() > 0;
+    }
+
+    public function plainFilters(): array
+    {
+        return $this->filters->filters();
+    }
 }

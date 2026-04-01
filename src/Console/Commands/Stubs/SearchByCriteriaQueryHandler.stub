@@ -9,8 +9,9 @@ use {{namespace}}\Application\Response\{{module}}sResponse;
 use {{namespace}}\Domain\{{module}};
 use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryHandler;
 
-final class Search{{module}}sByCriteriaQueryHandler
+final class Search{{module}}sByCriteriaQueryHandler implements QueryHandler
 {
     public function __construct(
         private readonly {{module}}sByCriteriaSearcher $searcher

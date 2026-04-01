@@ -8,8 +8,9 @@ use {{namespace}}\Domain\{{module}};
 use {{namespace}}\Domain\{{module}}Id;
 use {{namespace}}\Domain\{{module}}Name;
 use {{namespace}}\Domain\{{module}}Repository;
+use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandHandler;
 
-final class Create{{module}}CommandHandler
+final class Create{{module}}CommandHandler implements CommandHandler
 {
     public function __construct(private readonly {{module}}Repository $repository) {}
 

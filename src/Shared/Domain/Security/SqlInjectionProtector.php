@@ -127,7 +127,8 @@ final class SqlInjectionProtector
         $validOperators = [
             '=', '!=', '>', '<', '>=', '<=',
             'CONTAINS', 'NOT_CONTAINS', 'STARTS_WITH', 'ENDS_WITH',
-            'IN', 'BETWEEN', 'LIKE'
+            'IN', 'NOT IN', 'BETWEEN', 'NOT_BETWEEN',
+            'IS_NULL', 'IS_NOT_NULL', 'LIKE'
         ];
 
         if (!in_array(strtoupper($operator), $validOperators, true)) {

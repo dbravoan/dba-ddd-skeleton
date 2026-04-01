@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Application\SearchByCriteria;
 
-final class Count{{module}}sByCriteriaQuery
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
+
+final class Count{{module}}sByCriteriaQuery implements Query
 {
     public function __construct(
         private readonly array $filters,

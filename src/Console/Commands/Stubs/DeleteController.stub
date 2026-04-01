@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace {{namespace}}\Infrastructure\Controller;
 
 use {{namespace}}\Application\Delete\Delete{{module}}Command;
-use {{namespace}}\Application\Delete\Delete{{module}}CommandHandler;
+use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class Delete{{module}}Controller extends ApiController
 {
-    public function __construct(private readonly Delete{{module}}CommandHandler $handler) {}
+    public function __construct(private readonly CommandBus $bus) {}
 
     public function __invoke(string $id): JsonResponse
     {
-        ($this->handler)(new Delete{{module}}Command($id));
+        $this->bus->dispatch(new Delete{{module}}Command($id));
 
         return $this->sendResponse(null, '{{module}} deleted successfully');
     }

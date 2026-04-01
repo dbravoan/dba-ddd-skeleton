@@ -7,17 +7,34 @@ namespace {{namespace}}\Infrastructure\Persistence;
 use {{namespace}}\Domain\{{module}};
 use {{namespace}}\Domain\{{module}}Id;
 use {{namespace}}\Domain\{{module}}Repository;
-use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentRepository;
+use Dba\DddSkeleton\Shared\Domain\Bus\Event\EventBus;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
+use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteriaConverter;
+use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentRepository;
+use Illuminate\Database\Eloquent\Model;
+
+use function Lambdish\Phunctional\map;
 
 final class Eloquent{{module}}Repository extends EloquentRepository implements {{module}}Repository
 {
+    private static array $toEloquentFields = [
+        'id' => 'id',
+        'name' => 'name',
+    ];
+
+    public function __construct(Model $model, EventBus $eventBus)
+    {
+        parent::__construct($model, $eventBus);
+    }
+
     public function save({{module}} $model): void
     {
         $this->model->updateOrCreate(
             ['id' => $model->id()->value()],
             $model->toPrimitives()
         );
+
+        $this->publishEvents($model);
     }
 
     public function remove({{module}}Id $id): void
@@ -28,20 +45,38 @@ final class Eloquent{{module}}Repository extends EloquentRepository implements {
     public function search({{module}}Id $id): ?{{module}}
     {
         $model = $this->model->find($id->value());
-        return $model ? $this->toDomain($model) : null;
+
+        return $model ? $this->toDomain($model->toArray()) : null;
     }
 
     public function searchByCriteria(Criteria $criteria): array
     {
-        // Use default implementation or override
-        return [];
+        $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, self::$toEloquentFields);
+        $query = $this->model->newQuery();
+
+        $eloquentCriteria->each(static function ($method) use ($query) {
+            call_user_func_array([$query, $method->name], $method->parameters);
+        });
+
+        $results = $query->get()->toArray();
+
+        return map(fn(array $row) => $this->toDomain($row), $results);
     }
 
     public function countByCriteria(Criteria $criteria): int
     {
-         // Use default implementation or override
-         return 0;
+        $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, self::$toEloquentFields);
+        $query = $this->model->newQuery();
+
+        $eloquentCriteria->each(static function ($method) use ($query) {
+            call_user_func_array([$query, $method->name], $method->parameters);
+        });
+
+        return $query->count();
     }
-    
-    // Abstract method implementation... need to map properly
+
+    private function toDomain(array $primitives): {{module}}
+    {
+        return {{module}}::fromPrimitives($primitives);
+    }
 }

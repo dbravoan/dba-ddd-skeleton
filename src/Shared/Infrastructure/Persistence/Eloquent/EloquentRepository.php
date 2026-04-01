@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent;
 
+use Dba\DddSkeleton\Shared\Domain\Aggregate\AggregateRoot;
+use Dba\DddSkeleton\Shared\Domain\Bus\Event\EventBus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Contracts\Support\Arrayable;
@@ -29,9 +31,18 @@ abstract class EloquentRepository
      *
      * @param Model|Builder $model
      */
-    public function __construct($model)
+    public function __construct($model, private readonly ?EventBus $eventBus = null)
     {
         $this->model = $model;
+    }
+
+    protected function publishEvents(AggregateRoot $aggregate): void
+    {
+        $events = $aggregate->pullDomainEvents();
+
+        if ($this->eventBus !== null && count($events) > 0) {
+            $this->eventBus->publish(...$events);
+        }
     }
 
     /**

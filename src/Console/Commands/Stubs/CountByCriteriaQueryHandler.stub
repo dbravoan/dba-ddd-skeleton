@@ -9,8 +9,9 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\CountResponse;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryHandler;
 
-final class Count{{module}}sByCriteriaQueryHandler
+final class Count{{module}}sByCriteriaQueryHandler implements QueryHandler
 {
     public function __construct(private readonly {{module}}Repository $repository) {}
 

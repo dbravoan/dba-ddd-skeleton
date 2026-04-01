@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Infrastructure\Controller;
 
+use {{namespace}}\Application\Response\{{module}}sResponse;
 use {{namespace}}\Application\SearchByCriteria\Count{{module}}sByCriteriaQuery;
-use {{namespace}}\Application\SearchByCriteria\Count{{module}}sByCriteriaQueryHandler;
 use {{namespace}}\Application\SearchByCriteria\Search{{module}}sByCriteriaQuery;
-use {{namespace}}\Application\SearchByCriteria\Search{{module}}sByCriteriaQueryHandler;
-use {{namespace}}\Domain\{{module}};
-use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
-use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Criteria\RequestCriteriaBuilder;
 use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
@@ -19,9 +16,8 @@ use Illuminate\Http\Request;
 final class Search{{module}}sByCriteriaController extends ApiController
 {
     public function __construct(
-        private readonly RequestCriteriaBuilder $requestCriteriaBuilder,
-        private readonly Search{{module}}sByCriteriaQueryHandler $searcher,
-        private readonly Count{{module}}sByCriteriaQueryHandler $counter
+        private readonly QueryBus $bus,
+        private readonly RequestCriteriaBuilder $requestCriteriaBuilder
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -39,23 +35,23 @@ final class Search{{module}}sByCriteriaController extends ApiController
         );
 
         /** @var {{module}}sResponse ${{module_lc}}sResponse */
-        ${{module_lc}}sResponse = ($this->searcher)($searchQuery);
+        ${{module_lc}}sResponse = $this->bus->ask($searchQuery);
 
-        $filteredRecords = ($this->counter)(new Count{{module}}sByCriteriaQuery(
+        $filteredRecords = $this->bus->ask(new Count{{module}}sByCriteriaQuery(
             $request->get('filters', []),
             null,
             null,
             null,
             null
-        ));
+        ))->count();
 
-        $totalRecords = ($this->counter)(new Count{{module}}sByCriteriaQuery(
+        $totalRecords = $this->bus->ask(new Count{{module}}sByCriteriaQuery(
             [],
             null,
             null,
             null,
             null
-        ));
+        ))->count();
 
         $currentPage = $limit ? (int) floor($offset / $limit) + 1 : 1;
         $totalPages = $limit ? (int) ceil($filteredRecords / $limit) : 1;

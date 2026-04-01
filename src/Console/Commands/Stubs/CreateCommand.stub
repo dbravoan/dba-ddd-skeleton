@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Application\Create;
 
-final class Create{{module}}Command
+use Dba\DddSkeleton\Shared\Domain\Bus\Command\Command;
+
+final class Create{{module}}Command implements Command
 {
     public function __construct(
         private readonly string $id,

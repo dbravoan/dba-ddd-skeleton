@@ -8,8 +8,9 @@ use {{namespace}}\Application\Response\{{module}}Response;
 use {{namespace}}\Domain\{{module}};
 use {{namespace}}\Domain\{{module}}Id;
 use {{namespace}}\Domain\{{module}}Repository;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryHandler;
 
-final class Find{{module}}QueryHandler
+final class Find{{module}}QueryHandler implements QueryHandler
 {
     public function __construct(private readonly {{module}}Repository $repository) {}
 

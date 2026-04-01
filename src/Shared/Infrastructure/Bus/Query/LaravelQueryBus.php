@@ -7,18 +7,14 @@ namespace Dba\DddSkeleton\Shared\Infrastructure\Bus\Query;
 use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
 use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryBus;
 use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
-use Illuminate\Contracts\Bus\Dispatcher;
 use ReflectionClass;
-use RuntimeException;
 
 final class LaravelQueryBus implements QueryBus
 {
     private array $mappedHandlers = [];
 
-    public function __construct(
-        private readonly Dispatcher $dispatcher,
-        iterable $queryHandlers
-    ) {
+    public function __construct(iterable $queryHandlers)
+    {
         $this->mapHandlers($queryHandlers);
     }
 
@@ -42,7 +38,7 @@ final class LaravelQueryBus implements QueryBus
         $handler = $this->mappedHandlers[$query::class] ?? null;
         
         if (!$handler) {
-            throw new RuntimeException(sprintf('No handler found for query %s', $query::class));
+            throw new QueryNotRegisteredError($query);
         }
 
         /** @var Response|null $response */

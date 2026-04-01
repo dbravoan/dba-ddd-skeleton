@@ -48,8 +48,9 @@ Este esqueleto propone dividir tu código en tres capas con responsabilidades cl
 
 - **Separación Estricta de Capas**: Domain, Application e Infrastructure.
 - **Generadores de Código**: Comandos `artisan` para crear módulos completos con un solo comando.
+- **Domain Events**: Publicación automática de eventos de dominio desde el repositorio. Tu lógica nunca se olvida de publicar.
 - **Criteria Pattern**: Sistema de filtros, ordenación y paginación avanzado y desacoplado de Eloquent.
-- **Bus de Mensajes**: Abstracciones para Command Bus y Query Bus (síncrono y asíncrono).
+- **Bus de Mensajes**: Abstracciones para Command Bus, Query Bus y Event Bus con implementaciones nativas de Laravel.
 - **Repositorios**: Interfaces y contratos para desacoplar la persistencia.
 - **Value Objects**: Primitivos de dominio listos para usar (Uuid, Email, etc.).
 
@@ -96,7 +97,41 @@ Asegúrate de configurar tu `composer.json` para cargar las clases desde `src/`.
 
 ### 2. Service Provider
 
-El paquete incluye un `DddSkeletonServiceProvider` que se auto-descubre. Si necesitas registrar bindings manuales de repositorios, te recomendamos crear un `ContextServiceProvider` en tu aplicación.
+El paquete incluye un `DddSkeletonServiceProvider` que se auto-descubre. Registra automáticamente:
+
+- **`CommandBus`** → `LaravelCommandBus` (síncrono, reflexión)
+- **`QueryBus`** → `LaravelQueryBus` (síncrono, reflexión)
+- **`EventBus`** → `LaravelEventBus` (síncrono, sobreescribible a async)
+
+Para registrar tus propios handlers y repositorios, consulta la sección **[Service Providers](#-service-providers-organización-del-contenedor)**.
+
+### 3. Qué incluye el Paquete
+
+```text
+Shared/
+├── Domain/
+│   ├── Aggregate/       AggregateRoot (record, pullDomainEvents)
+│   ├── Bus/
+│   │   ├── Command/     Command, CommandBus, CommandHandler (interfaces)
+│   │   ├── Event/       DomainEvent, EventBus, DomainEventSubscriber (interfaces)
+│   │   └── Query/       Query, QueryBus, QueryHandler, Response (interfaces)
+│   ├── Criteria/        Criteria, Filters, FilterGroup, Order (pattern completo)
+│   ├── Security/        SqlInjectionProtector
+│   └── ValueObject/     Uuid, StringValueObject, IntValueObject, etc.
+├── Infrastructure/
+│   ├── Bus/
+│   │   ├── Command/     LaravelCommandBus, CommandNotRegisteredError
+│   │   ├── Event/
+│   │   │   └── Laravel/ LaravelEventBus, LaravelQueueEventBus, ProcessDomainEventJob
+│   │   └── Query/       LaravelQueryBus, QueryNotRegisteredError
+│   ├── Criteria/        RequestCriteriaBuilder
+│   ├── Laravel/         ApiController, Providers/RepositoryServiceProvider
+│   └── Persistence/
+│       ├── Eloquent/    EloquentRepository, EloquentCriteriaConverter
+│       └── QueryBuilder/ QueryBuilderRepository, QueryBuilderCriteriaConverter
+└── Console/
+    └── Commands/        MakeModuleCommand + 25 stubs
+```
 
 ---
 
@@ -116,38 +151,32 @@ Esto generará automáticamente la siguiente estructura en `src/Catalog/Product`
 ```text
 src/Catalog/Product/
 ├── Application/
-│   ├── Create/      # Casos de uso de creación (Command + Handler)
-│   ├── Find/        # Casos de uso de búsqueda (Query + Handler + Response)
-│   ├── Search/      # Búsqueda por criterios
-│   └── ...
+│   ├── Create/          # Caso de uso de creación (Command + Handler)
+│   ├── Delete/          # Caso de uso de borrado
+│   ├── Find/            # Caso de uso de búsqueda (Query + Handler)
+│   ├── Response/        # DTOs de respuesta (Response + Responses)
+│   ├── SearchByCriteria/# Búsqueda y conteo por criterios
+│   └── Update/          # Caso de uso de actualización
 ├── Domain/
-│   ├── Product.php              # Entidad / Agregado
-│   ├── ProductId.php            # Value Object
-│   ├── ProductRepository.php    # Interfaz del Repositorio
-│   └── ...
+│   ├── Product.php                     # Entidad / Agregado
+│   ├── ProductCreatedDomainEvent.php   # Evento de dominio
+│   ├── ProductId.php                   # Value Object
+│   ├── ProductName.php                 # Value Object
+│   └── ProductRepository.php          # Interfaz del Repositorio
 └── Infrastructure/
-    ├── Persistence/
-    │   └── EloquentProductRepository.php  # Implementación Eloquent
-    └── Controller/
-        └── CreateProductController.php    # Controlador API
+    ├── Controller/
+    │   ├── CreateProductController.php
+    │   ├── DeleteProductController.php
+    │   ├── FindProductController.php
+    │   ├── UpdateProductController.php
+    │   └── SearchProductsByCriteriaController.php
+    └── Persistence/
+        └── EloquentProductRepository.php
 ```
 
 ### Inyección de Dependencias
 
-Para que Laravel sepa qué implementación usar cuando inyectas una interfaz de dominio, debes hacer el binding en un ServiceProvider (por ejemplo `app/Providers/AppServiceProvider.php` o uno dedicado):
-
-```php
-use Catalog\Product\Domain\ProductRepository;
-use Catalog\Product\Infrastructure\Persistence\EloquentProductRepository;
-
-public function register(): void
-{
-    $this->app->bind(
-        ProductRepository::class,
-        EloquentProductRepository::class
-    );
-}
-```
+Para que Laravel sepa qué implementación usar cuando inyectas una interfaz de dominio, debes hacer el binding en un ServiceProvider. Consulta la sección **[Service Providers](#-service-providers-organización-del-contenedor)** para ver cómo crear un `RepositoryServiceProvider` y un `DomainServiceProvider` dedicados.
 
 ---
 
@@ -193,15 +222,340 @@ Veamos el flujo de datos completo para entender el desacoplamiento:
     *Nota: Aquí usamos la interfaz `ProductRepository`, no Eloquent directamente. Esto nos permite testear este Handler con un MockRepository sin tocar la base de datos.*
 
 4. **El Repositorio (`Infrastructure`)**
-    La implementación real que habla con la base de datos.
+    La implementación real que habla con la base de datos. Además, **publica automáticamente los eventos de dominio** tras persistir el agregado.
 
     ```php
-    final class EloquentProductRepository implements ProductRepository {
+    final class EloquentProductRepository extends EloquentRepository implements ProductRepository {
         public function save(Product $product): void {
-            EloquentModel::updateOrCreate(..., $product->toPrimitives());
+            $this->model->updateOrCreate(
+                ['id' => $product->id()->value()],
+                $product->toPrimitives()
+            );
+
+            // Publica automáticamente los Domain Events grabados en el agregado
+            $this->publishEvents($product);
         }
     }
     ```
+
+---
+
+## 📣 Domain Events: Publicación Automática
+
+Los Domain Events son la forma en que un agregado comunica que algo ha ocurrido en el dominio. Este skeleton implementa el patrón de forma **automática y transparente** desde la capa de infraestructura.
+
+### Flujo Completo
+
+```mermaid
+sequenceDiagram
+    participant H as CommandHandler
+    participant A as AggregateRoot
+    participant R as Repository
+    participant EB as EventBus
+    participant S as Subscriber
+
+    H->>A: Product::create(...)
+    A->>A: record(ProductCreatedDomainEvent)
+    H->>R: save($product)
+    R->>R: Persist to DB (Eloquent)
+    R->>A: pullDomainEvents()
+    A-->>R: [ProductCreatedDomainEvent]
+    R->>EB: publish(...$events)
+    EB->>S: notify(ProductCreatedDomainEvent)
+```
+
+### ¿Cómo funciona?
+
+1. **El Agregado graba eventos** — Al ejecutar una acción de dominio (ej: `Product::create()`), la entidad llama internamente a `$this->record(new ProductCreatedDomainEvent(...))`. Los eventos se acumulan en memoria.
+
+2. **El Repositorio publica** — Tras persistir el agregado, el repositorio llama a `$this->publishEvents($product)`. Este método (heredado de `EloquentRepository`) hace `pullDomainEvents()` del agregado y los envía al `EventBus`.
+
+3. **El EventBus despacha** — El bus recorre los subscribers registrados y ejecuta la lógica reactiva (enviar email, actualizar caché, sincronizar otro bounded context, etc.).
+
+### Anatomía de un Domain Event
+
+Cada módulo genera automáticamente su evento `Created`. Puedes crear más eventos siguiendo el mismo patrón:
+
+```php
+final class ProductCreatedDomainEvent extends DomainEvent
+{
+    public function __construct(
+        string $aggregateId,
+        private readonly string $name,
+        string $eventId = null,
+        string $occurredOn = null
+    ) {
+        parent::__construct($aggregateId, $eventId, $occurredOn);
+    }
+
+    // Serialización para colas/persistencia
+    public static function fromPrimitives(string $aggregateId, array $body, string $eventId, string $occurredOn): self
+    {
+        return new self($aggregateId, $body['name'], $eventId, $occurredOn);
+    }
+
+    public static function eventName(): string { return 'product.created'; }
+
+    public function toPrimitives(): array { return ['name' => $this->name]; }
+}
+```
+
+### Binding del EventBus
+
+El `DddSkeletonServiceProvider` ya registra automáticamente el `LaravelEventBus` como implementación de `EventBus`. Solo necesitas **etiquetar tus subscribers** para que el bus los descubra:
+
+```php
+// En tu DomainServiceProvider (ver sección Service Providers)
+$this->app->tag([
+    SendWelcomeEmailOnUserCreated::class,
+    CreateAuditLogOnUserCreated::class,
+], 'dba_ddd.domain_event_subscriber');
+```
+
+> **Nota**: Si no registras ningún subscriber, los repositorios funcionan igualmente. Los eventos simplemente se descartan. Esto permite una adopción gradual.
+
+---
+
+## 🔧 Service Providers: Organización del Contenedor
+
+Para mantener la arquitectura limpia y desacoplada, recomendamos crear **dos Service Providers dedicados** en tu aplicación Laravel. Estos no vienen en el paquete — los creas tú porque contienen los bindings específicos de **tu** dominio.
+
+### RepositoryServiceProvider
+
+Responsable de vincular cada interfaz de repositorio del dominio con su implementación de infraestructura (Eloquent).
+
+```bash
+php artisan make:provider RepositoryServiceProvider
+```
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use Catalog\Product\Domain\ProductRepository;
+use Catalog\Product\Infrastructure\Persistence\EloquentProductRepository;
+use Identity\User\Domain\UserRepository;
+use Identity\User\Infrastructure\Persistence\EloquentUserRepository;
+use Illuminate\Support\ServiceProvider;
+
+final class RepositoryServiceProvider extends ServiceProvider
+{
+    /** Interfaz => Implementación */
+    private array $repositories = [
+        ProductRepository::class => EloquentProductRepository::class,
+        UserRepository::class    => EloquentUserRepository::class,
+    ];
+
+    public function register(): void
+    {
+        foreach ($this->repositories as $interface => $implementation) {
+            $this->app->bind($interface, $implementation);
+        }
+    }
+}
+```
+
+> **Tip**: Usa un array declarativo `$repositories` en lugar de múltiples `$this->app->bind()`. Así se ve de un vistazo qué implementaciones usa tu proyecto.
+
+### DomainServiceProvider
+
+Responsable de registrar los **Command Handlers**, **Query Handlers** y **Domain Event Subscribers** con sus tags correspondientes para que los buses los descubran.
+
+```bash
+php artisan make:provider DomainServiceProvider
+```
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use Catalog\Product\Application\Create\CreateProductCommandHandler;
+use Catalog\Product\Application\Find\FindProductQueryHandler;
+use Identity\User\Application\Create\CreateUserCommandHandler;
+use Identity\User\Application\Find\FindUserQueryHandler;
+use Illuminate\Support\ServiceProvider;
+
+final class DomainServiceProvider extends ServiceProvider
+{
+    /** Handlers de comandos — se ejecutan con CommandBus::dispatch() */
+    private array $commandHandlers = [
+        CreateProductCommandHandler::class,
+        CreateUserCommandHandler::class,
+    ];
+
+    /** Handlers de queries — se ejecutan con QueryBus::ask() */
+    private array $queryHandlers = [
+        FindProductQueryHandler::class,
+        FindUserQueryHandler::class,
+    ];
+
+    /** Subscribers de eventos de dominio — se ejecutan automáticamente */
+    private array $domainEventSubscribers = [
+        // SendWelcomeEmailOnUserCreated::class,
+        // CreateAuditLogOnUserCreated::class,
+    ];
+
+    public function register(): void
+    {
+        $this->registerCommandHandlers();
+        $this->registerQueryHandlers();
+        $this->registerDomainEventSubscribers();
+    }
+
+    private function registerCommandHandlers(): void
+    {
+        foreach ($this->commandHandlers as $handler) {
+            $this->app->tag($handler, 'dba_ddd.command_handler');
+        }
+    }
+
+    private function registerQueryHandlers(): void
+    {
+        foreach ($this->queryHandlers as $handler) {
+            $this->app->tag($handler, 'dba_ddd.query_handler');
+        }
+    }
+
+    private function registerDomainEventSubscribers(): void
+    {
+        foreach ($this->domainEventSubscribers as $subscriber) {
+            $this->app->tag($subscriber, 'dba_ddd.domain_event_subscriber');
+        }
+    }
+}
+```
+
+### Registrar los Providers
+
+Añade ambos en tu `bootstrap/providers.php` (Laravel 11+) o `config/app.php`:
+
+```php
+// bootstrap/providers.php (Laravel 11+)
+return [
+    App\Providers\RepositoryServiceProvider::class,
+    App\Providers\DomainServiceProvider::class,
+];
+```
+
+```php
+// config/app.php (Laravel 10)
+'providers' => [
+    // ...
+    App\Providers\RepositoryServiceProvider::class,
+    App\Providers\DomainServiceProvider::class,
+],
+```
+
+### Crear un Domain Event Subscriber
+
+Un subscriber reacciona a uno o más eventos de dominio. Implementa `DomainEventSubscriber` y define `subscribedTo()` con los eventos que escucha:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Notifications\User;
+
+use Dba\DddSkeleton\Shared\Domain\Bus\Event\DomainEventSubscriber;
+use Identity\User\Domain\UserCreatedDomainEvent;
+
+final class SendWelcomeEmailOnUserCreated implements DomainEventSubscriber
+{
+    public function __construct(private readonly MailService $mailer) {}
+
+    public static function subscribedTo(): array
+    {
+        return [UserCreatedDomainEvent::class];
+    }
+
+    public function __invoke(UserCreatedDomainEvent $event): void
+    {
+        $this->mailer->sendWelcome($event->aggregateId(), $event->toPrimitives()['name']);
+    }
+}
+```
+
+---
+
+## ⚡ EventBus: Síncrono vs Asíncrono
+
+### Modo Síncrono (por defecto)
+
+El `LaravelEventBus` que registra el paquete es **síncrono**: cuando el repositorio llama a `publishEvents()`, los subscribers se ejecutan **inmediatamente** en el mismo proceso PHP.
+
+```mermaid
+sequenceDiagram
+    participant R as Repository
+    participant EB as LaravelEventBus
+    participant S1 as SendWelcomeEmail
+    participant S2 as CreateAuditLog
+
+    R->>EB: publish(UserCreatedDomainEvent)
+    EB->>S1: __invoke(event) [sync]
+    S1-->>EB: ✓
+    EB->>S2: __invoke(event) [sync]
+    S2-->>EB: ✓
+    EB-->>R: ✓
+```
+
+**Ideal para**: Side-effects rápidos (actualizar caché, escribir log, incrementar contador).
+
+### Modo Asíncrono (Colas de Laravel)
+
+Para tareas pesadas (enviar emails, generar PDFs, llamar a APIs externas), el paquete incluye `LaravelQueueEventBus` y `ProcessDomainEventJob`. Los eventos se serializan a primitivos para un transporte seguro por colas y se reconstruyen vía `fromPrimitives()` en el worker.
+
+**Activar el modo asíncrono** — solo sobreescribe el binding de `EventBus` en tu `DomainServiceProvider`:
+
+```php
+use Dba\DddSkeleton\Shared\Domain\Bus\Event\EventBus;
+use Dba\DddSkeleton\Shared\Infrastructure\Bus\Event\Laravel\LaravelQueueEventBus;
+
+// Sobreescribir el binding del paquete con la versión async
+$this->app->singleton(EventBus::class, function ($app) {
+    return new LaravelQueueEventBus(
+        queue: 'domain_events',       // Cola donde se envían los jobs
+        connection: null,              // null = driver por defecto (redis, sqs, etc.)
+    );
+});
+```
+
+> **¿Cómo evita la recursión infinita?** El `ProcessDomainEventJob` inyecta `LaravelEventBus` (la clase concreta síncrona), no la interfaz `EventBus`. Así, aunque `EventBus` apunte a `LaravelQueueEventBus`, el worker siempre resuelve el bus síncrono para entregar los eventos a los subscribers.
+
+```mermaid
+sequenceDiagram
+    participant R as Repository
+    participant QB as LaravelQueueEventBus
+    participant Q as Redis/SQS Queue
+    participant W as Worker
+    participant SB as LaravelEventBus (sync)
+    participant S as Subscriber
+
+    R->>QB: publish(UserCreatedDomainEvent)
+    QB->>Q: Push ProcessDomainEventJob
+    QB-->>R: ✓ (inmediato)
+    
+    Q->>W: Pop Job (async)
+    W->>SB: publish(event reconstituido)
+    SB->>S: __invoke(event)
+```
+
+**Ejecutar el worker:**
+
+```bash
+php artisan queue:work --queue=domain_events
+```
+
+**Beneficios del modo asíncrono:**
+- **Resiliencia**: Si un subscriber falla, el job reintenta automáticamente.
+- **Escalabilidad**: Múltiples workers procesando eventos en servidores separados.
+- **Experiencia de Usuario**: Las respuestas HTTP no esperan a side-effects lentos.
 
 ---
 
@@ -256,60 +610,37 @@ $criteria = $this->requestCriteriaBuilder->buildFromRequest($request);
 
 ---
 
-## 🧠 Arquitectura del Bus: Síncrono vs Asíncrono
+## 🧠 Arquitectura del Bus
 
 Una de las joyas de esta arquitectura es la **transparencia de ubicación**. Tu lógica de negocio (Handler) no sabe *dónde* ni *cuándo* se ejecuta.
 
-### Modo Síncrono (Servicio de Aplicación)
+### Command Bus y Query Bus
 
-Por defecto, cuando despachas un comando, el Bus busca el Handler y lo ejecuta inmediatamente en el mismo proceso PHP.
-
-**Caso de Uso**: Crear un usuario y devolver su ID en la respuesta HTTP.
+El paquete registra `LaravelCommandBus` y `LaravelQueryBus` como singletons. Ambos usan **reflexión** para mapear automáticamente cada Command/Query a su Handler según el type-hint del parámetro `__invoke()`.
 
 ```mermaid
 sequenceDiagram
-    Controller->>Bus: Dispatch Command
-    Bus->>Handler: Execute (Sync)
-    Handler->>Repository: Save
-    Handler-->>Bus: Result
-    Bus-->>Controller: Result
+    Controller->>CommandBus: dispatch(CreateProductCommand)
+    CommandBus->>CommandBus: Resolver Handler (reflexión)
+    CommandBus->>CreateProductCommandHandler: __invoke($command)
+    CreateProductCommandHandler->>Repository: save($product)
+    Repository-->>CommandBus: ✓
+    CommandBus-->>Controller: ✓
     Controller-->>Client: JSON Response
 ```
 
-### Modo Asíncrono (Colas y Workers)
-
-¿Qué pasa si "Generar Reporte PDF" tarda 10 segundos? No queremos bloquear al usuario.
-Gracias al Bus, **no cambias ni una línea de tu lógica**. Solo marcas el Comando con la interfaz `ShouldQueue`.
+Para que un Handler sea descubierto por el bus, debe estar etiquetado en tu `DomainServiceProvider`:
 
 ```php
-use Illuminate\Contracts\Queue\ShouldQueue;
-
-final class GenerateReportCommand implements ShouldQueue { ... }
+$this->app->tag(CreateProductCommandHandler::class, 'dba_ddd.command_handler');
+$this->app->tag(FindProductQueryHandler::class, 'dba_ddd.query_handler');
 ```
 
-**Flujo Asíncrono:**
+Si despachas un Command/Query sin handler registrado, el bus lanzará `CommandNotRegisteredError` o `QueryNotRegisteredError` respectivamente.
 
-1. Laravel detecta `ShouldQueue`.
-2. En lugar de llamar al Handler, serializa el Comando y lo envía a **Redis** (o tu driver de colas).
-3. El Controlador responde "202 Accepted" inmediatamente.
-4. Un proceso **Worker (Supervisor)** en segundo plano recoge el comando y ejecuta el Handler.
+### Event Bus
 
-```mermaid
-sequenceDiagram
-    Controller->>Bus: Dispatch Command
-    Bus->>Redis: Push Job
-    Bus-->>Controller: Void
-    Controller-->>Client: 202 Accepted
-    
-    Redis->>Worker: Pop Job
-    Worker->>Handler: Execute (Async)
-```
-
-**Beneficios:**
-
-- **Resiliencia**: Si falla, el Worker reintenta automáticamente.
-- **Escalabilidad**: Puedes tener 50 workers procesando reportes en otro servidor.
-- **Experiencia de Usuario**: Respuestas en milisegundos, tareas pesadas en background.
+Para el EventBus, consulta la sección **[EventBus: Síncrono vs Asíncrono](#-eventbus-síncrono-vs-asíncrono)** donde se documenta tanto el modo síncrono (`LaravelEventBus`) como el asíncrono (`LaravelQueueEventBus`) incluidos en el paquete.
 
 ---
 
@@ -318,7 +649,9 @@ sequenceDiagram
 - **Bounded Context**: Límite lógico de un subsistema (ej: "Facturación", "Catálogo").
 - **Aggregates**: Conjunto de entidades que se tratan como una unidad (ej: Producto + Variantes).
 - **Value Objects**: Objetos que se identifican por su valor, no por ID (ej: Email, Precio, Coordenada). Son inmutables.
+- **Domain Events**: Notificaciones de que algo ha ocurrido en el dominio (ej: `UserCreated`, `OrderShipped`). Se publican automáticamente desde el repositorio.
 - **DTO (Data Transfer Object)**: Objeto simple para mover datos entre capas (Commands/Queries).
+- **EventBus**: Infraestructura que despacha Domain Events a sus subscribers. El paquete incluye `LaravelEventBus` (síncrono) y `LaravelQueueEventBus` (asíncrono vía colas de Laravel).
 
 ---
 

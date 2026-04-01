@@ -6,18 +6,14 @@ namespace Dba\DddSkeleton\Shared\Infrastructure\Bus\Command;
 
 use Dba\DddSkeleton\Shared\Domain\Bus\Command\Command;
 use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandBus;
-use Illuminate\Contracts\Bus\Dispatcher;
 use ReflectionClass;
-use RuntimeException;
 
 final class LaravelCommandBus implements CommandBus
 {
     private array $mappedHandlers = [];
 
-    public function __construct(
-        private readonly Dispatcher $dispatcher,
-        iterable $commandHandlers
-    ) {
+    public function __construct(iterable $commandHandlers)
+    {
         $this->mapHandlers($commandHandlers);
     }
 
@@ -41,7 +37,7 @@ final class LaravelCommandBus implements CommandBus
         $handler = $this->mappedHandlers[$command::class] ?? null;
         
         if (!$handler) {
-            throw new RuntimeException(sprintf('No handler found for command %s', $command::class));
+            throw new CommandNotRegisteredError($command);
         }
 
         $handler($command);

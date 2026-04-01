@@ -14,17 +14,15 @@ final class {{module}}Response implements Response
 
     public function __construct(string $id, string $name)
     {
-        $this->id         = $id;
-        $this->name       = $name;
-        $this->created_at = $created_at;
+        $this->id   = $id;
+        $this->name = $name;
     }
 
     public static function fromAggregate({{module}} ${{module_lc}}): self
     {
         return new self(
             ${{module_lc}}->id()->value(),
-            ${{module_lc}}->name()->value(),
-            // Add other fields here mapping from aggregate
+            ${{module_lc}}->name()->value()
         );
     }
 

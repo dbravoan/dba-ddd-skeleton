@@ -5,18 +5,19 @@ declare(strict_types=1);
 namespace {{namespace}}\Infrastructure\Controller;
 
 use {{namespace}}\Application\Find\Find{{module}}Query;
-use {{namespace}}\Application\Find\Find{{module}}QueryHandler;
+use {{namespace}}\Application\Response\{{module}}Response;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Laravel\ApiController;
 use Illuminate\Http\JsonResponse;
 
 final class Find{{module}}Controller extends ApiController
 {
-    public function __construct(private readonly Find{{module}}QueryHandler $handler) {}
+    public function __construct(private readonly QueryBus $bus) {}
 
     public function __invoke(string $id): JsonResponse
     {
-        /** @var \{{namespace}}\Application\Response\{{module}}Response|null $response */
-        $response = ($this->handler)(new Find{{module}}Query($id));
+        /** @var {{module}}Response|null $response */
+        $response = $this->bus->ask(new Find{{module}}Query($id));
 
         if (null === $response) {
             return $this->sendError('Not Found', [], 404);

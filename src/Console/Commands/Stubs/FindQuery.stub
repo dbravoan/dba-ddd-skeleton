@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Application\Find;
 
-final class Find{{module}}Query
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
+
+final class Find{{module}}Query implements Query
 {
     public function __construct(private readonly string $id) {}
 
