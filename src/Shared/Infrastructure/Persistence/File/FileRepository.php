@@ -4,283 +4,184 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Infrastructure\Persistence\File;
 
-use Illuminate\Support\Facades\Storage;
-use InvalidArgumentException;
-use Throwable;
+use RuntimeException;
 
 abstract class FileRepository
 {
-    protected string $directory;
-    protected string $format;
+    private string $path;
 
-    /**
-     * Constructor de FileRepository
-     *
-     * @param string $directory - Directorio donde se almacenan los archivos
-     * @param string $format - Formato de archivo: 'json', 'xml', 'csv'
-     */
-    public function __construct(string $directory, string $format = 'json')
+    public function __construct(string $path)
     {
-        if (!Storage::exists($directory)) {
-            Storage::makeDirectory($directory);
-        }
-
-        if (!in_array($format, ['json', 'xml', 'csv'])) {
-            throw new InvalidArgumentException("Invalid format. Only 'json', 'xml', and 'csv' are supported.");
-        }
-
-        $this->directory = $directory;
-        $this->format = $format;
+        $this->path = $path;
     }
 
-    /**
-     * Encuentra un archivo por su ID.
-     *
-     * @param mixed $id
-     * @return array|null
-     */
-    public function find($id): ?array
+    /** @return array<string, mixed>|null */
+    public function find(mixed $id): ?array
     {
-        $filePath = $this->getFilePath($id);
+        $idString = is_scalar($id) ? (string) $id : '';
+        $filename = "{$this->path}/{$idString}.{$this->extension()}";
 
-        if (!Storage::exists($filePath)) {
+        if (! file_exists($filename)) {
             return null;
         }
 
-        $content = Storage::get($filePath);
+        $content = file_get_contents($filename);
 
-        return $this->fromFile($content);
+        return $this->fromFile(is_string($content) ? $content : '');
     }
 
     /**
-     * Crea un archivo.
-     *
-     * @param array $attributes
-     * @return array
-     * @throws Throwable
+     * @param array<string, mixed> $attributes
      */
-    public function create(array $attributes): array
+    public function create(array $attributes): void
     {
-        $id = $attributes['id'] ?? uniqid();
-        $filePath = $this->getFilePath($id);
-
-        if (Storage::exists($filePath)) {
-            throw new InvalidArgumentException("File with ID {$id} already exists.");
-        }
-
-        $this->saveToFile($filePath, $attributes);
-
-        return $attributes;
+        $id = $attributes['id'] ?? null;
+        $idString = is_scalar($id) ? (string) $id : '';
+        $this->saveToFile($idString, $attributes);
     }
 
     /**
-     * Actualiza un archivo.
-     *
-     * @param mixed $id
-     * @param array $attributes
-     * @return array
-     * @throws Throwable
+     * @param array<string, mixed> $attributes
      */
-    public function update($id, array $attributes): array
+    public function update(mixed $id, array $attributes): void
     {
-        $filePath = $this->getFilePath($id);
+        $idString = is_scalar($id) ? (string) $id : '';
+        $this->saveToFile($idString, $attributes);
+    }
 
-        if (!Storage::exists($filePath)) {
-            throw new InvalidArgumentException("File with ID {$id} not found.");
+    public function delete(mixed $id): void
+    {
+        $idString = is_scalar($id) ? (string) $id : '';
+        $filename = "{$this->path}/{$idString}.{$this->extension()}";
+
+        if (file_exists($filename)) {
+            unlink($filename);
         }
-
-        $this->saveToFile($filePath, $attributes);
-
-        return $attributes;
     }
 
     /**
-     * Elimina un archivo por su ID.
-     *
-     * @param mixed $id
-     * @return void
-     */
-    public function delete($id): void
-    {
-        $filePath = $this->getFilePath($id);
-
-        if (!Storage::exists($filePath)) {
-            throw new InvalidArgumentException("File with ID {$id} not found.");
-        }
-
-        Storage::delete($filePath);
-    }
-
-    /**
-     * Busca archivos que coincidan con los criterios.
-     *
-     * @param array $criteria
-     * @return array
+     * @param array<string, mixed> $criteria
+     * @return array<int, array<string, mixed>>
      */
     public function matching(array $criteria): array
     {
-        $files = Storage::files($this->directory);
+        $files = glob("{$this->path}/*.{$this->extension()}");
 
-        $matchingFiles = array_filter($files, function ($file) use ($criteria) {
-            $content = Storage::get($file);
-            $data = $this->fromFile($content);
-
-            foreach ($criteria as $key => $value) {
-                if (!isset($data[$key]) || $data[$key] !== $value) {
-                    return false;
-                }
-            }
-            return true;
-        });
-
-        return array_map(function ($file) {
-            return $this->fromFile(Storage::get($file));
-        }, $matchingFiles);
-    }
-
-    /**
-     * Convierte el contenido del archivo a un array dependiendo del formato.
-     *
-     * @param string $content
-     * @return array
-     */
-    protected function fromFile(string $content): array
-    {
-        return match ($this->format) {
-            'json' => $this->fromJson($content),
-            'xml'  => $this->fromXml($content),
-            'csv'  => $this->fromCsv($content),
-        };
-    }
-
-    /**
-     * Guarda los atributos en un archivo en el formato especificado.
-     *
-     * @param string $filePath
-     * @param array $attributes
-     * @return void
-     * @throws Throwable
-     */
-    protected function saveToFile(string $filePath, array $attributes): void
-    {
-        $content = match ($this->format) {
-            'json' => $this->toJson($attributes),
-            'xml'  => $this->toXml($attributes),
-            'csv'  => $this->toCsv($attributes),
-        };
-
-        Storage::put($filePath, $content);
-    }
-
-    /**
-     * Convierte un array a JSON.
-     *
-     * @param array $attributes
-     * @return string
-     */
-    protected function toJson(array $attributes): string
-    {
-        return json_encode($attributes, JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * Convierte un array a XML.
-     *
-     * @param array $attributes
-     * @return string
-     */
-    protected function toXml(array $attributes): string
-    {
-        $xml = new \SimpleXMLElement('<root/>');
-
-        array_walk_recursive($attributes, function ($value, $key) use ($xml) {
-            $xml->addChild($key, htmlspecialchars((string) $value));
-        });
-
-        return $xml->asXML();
-    }
-
-    /**
-     * Convierte un array a CSV.
-     *
-     * @param array $attributes
-     * @return string
-     */
-    protected function toCsv(array $attributes): string
-    {
-        $handle = fopen('php://temp', 'r+');
-        // Assuming each record has the same keys, using the keys of the first item as headers
-        fputcsv($handle, array_keys($attributes));
-        fputcsv($handle, array_values($attributes));
-
-        rewind($handle);
-        $csv = stream_get_contents($handle);
-        fclose($handle);
-
-        return $csv;
-    }
-
-    /**
-     * Convierte un contenido JSON a un array.
-     *
-     * @param string $content
-     * @return array
-     */
-    protected function fromJson(string $content): array
-    {
-        return json_decode($content, true);
-    }
-
-    /**
-     * Convierte un contenido XML a un array.
-     *
-     * @param string $content
-     * @return array
-     */
-    protected function fromXml(string $content): array
-    {
-        $xmlObject = simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
-        return json_decode(json_encode($xmlObject), true);
-    }
-
-    /**
-     * Convierte un contenido CSV a un array.
-     *
-     * @param string $content
-     * @return array
-     */
-    protected function fromCsv(string $content): array
-    {
-        $rows = [];
-        $handle = fopen('php://temp', 'r+');
-        fwrite($handle, $content);
-        rewind($handle);
-
-        $headers = fgetcsv($handle);
-        $data = fgetcsv($handle);
-
-        fclose($handle);
-
-        if ($headers && $data) {
-            $rows = array_combine($headers, $data);
+        if ($files === false) {
+            return [];
         }
 
-        return $rows;
+        return array_map(function ($file) {
+            $content = file_get_contents($file);
+
+            return $this->fromFile(is_string($content) ? $content : '');
+        }, $files);
     }
 
-    /**
-     * Obtiene la ruta completa de un archivo según el ID.
-     *
-     * @param mixed $id
-     * @return string
-     */
-    protected function getFilePath($id): string
+    abstract protected function extension(): string;
+
+    /** @return array<string, mixed> */
+    protected function fromFile(string $content): array
     {
-        $extension = match ($this->format) {
-            'json' => 'json',
-            'xml'  => 'xml',
-            'csv'  => 'csv',
+        return match ($this->extension()) {
+            'json'  => $this->fromJson($content),
+            'xml'   => $this->fromXml($content),
+            'csv'   => $this->fromCsv($content),
+            default => throw new \RuntimeException('Unsupported extension'),
         };
-        return "{$this->directory}/{$id}.{$extension}";
+    }
+
+    /** @param array<string, mixed> $attributes */
+    protected function saveToFile(string $id, array $attributes): void
+    {
+        $filename = "{$this->path}/{$id}.{$this->extension()}";
+        $content  = match ($this->extension()) {
+            'json'  => $this->toJson($attributes),
+            'xml'   => $this->toXml($attributes),
+            'csv'   => $this->toCsv($attributes),
+            default => throw new \RuntimeException('Unsupported extension'),
+        };
+
+        file_put_contents($filename, $content);
+    }
+
+    /** @param array<string, mixed> $attributes */
+    protected function toJson(array $attributes): string
+    {
+        $json = json_encode($attributes);
+        if ($json === false) {
+            throw new RuntimeException('Unable to encode JSON');
+        }
+
+        return $json;
+    }
+
+    /** @param array<string, mixed> $attributes */
+    protected function toXml(array $attributes): string
+    {
+        return xmlrpc_encode($attributes);
+    }
+
+    /** @param array<string, mixed> $attributes */
+    protected function toCsv(array $attributes): string
+    {
+        $stream = fopen('php://memory', 'r+');
+        if ($stream === false) {
+            throw new RuntimeException('Unable to open memory stream');
+        }
+        
+        $keys = array_keys($attributes);
+        /** @var array<int|string, bool|float|int|string|null> $keysStrings */
+        $keysStrings = array_map(fn($k) => (string)$k, $keys);
+        fputcsv($stream, $keysStrings);
+
+        $values = array_values($attributes);
+        /** @var array<int|string, bool|float|int|string|null> $valuesStrings */
+        $valuesStrings = array_map(fn($v) => is_scalar($v) ? (string)$v : null, $values);
+        fputcsv($stream, $valuesStrings);
+        
+        rewind($stream);
+        $csv = stream_get_contents($stream);
+        fclose($stream);
+
+        return is_string($csv) ? $csv : '';
+    }
+
+    /** @return array<string, mixed> */
+    protected function fromJson(string $content): array
+    {
+        $data = json_decode($content, true);
+
+        return is_array($data) ? $data : [];
+    }
+
+    /** @return array<string, mixed> */
+    protected function fromXml(string $content): array
+    {
+        $data = json_decode((string) json_encode(simplexml_load_string($content)), true);
+
+        return is_array($data) ? $data : [];
+    }
+
+    /** @return array<string, mixed> */
+    protected function fromCsv(string $content): array
+    {
+        $stream = fopen('php://memory', 'r+');
+        if ($stream === false) {
+            throw new RuntimeException('Unable to open memory stream');
+        }
+        fwrite($stream, $content);
+        rewind($stream);
+        $keys = fgetcsv($stream);
+        $values = fgetcsv($stream);
+        fclose($stream);
+
+        if (! is_array($keys) || ! is_array($values)) {
+            return [];
+        }
+
+        $stringKeys = array_map(fn($k) => (string)$k, $keys);
+
+        return array_combine($stringKeys, $values);
     }
 }

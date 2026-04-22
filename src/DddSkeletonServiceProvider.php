@@ -11,6 +11,7 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Bus\Command\LaravelCommandBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Bus\Event\Laravel\LaravelEventBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Bus\Query\LaravelQueryBus;
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\Providers\RepositoryServiceProvider;
 use Illuminate\Support\ServiceProvider;
 
 final class DddSkeletonServiceProvider extends ServiceProvider
@@ -23,7 +24,7 @@ final class DddSkeletonServiceProvider extends ServiceProvider
             ]);
 
             $this->publishes([
-                __DIR__ . '/Console/Commands/Stubs' => resource_path('stubs/dbravoan/dba-ddd-skeleton'),
+                __DIR__.'/Console/Commands/Stubs' => resource_path('stubs/dbravoan/dba-ddd-skeleton'),
             ], 'dba-ddd-skeleton-stubs');
         }
     }
@@ -31,7 +32,7 @@ final class DddSkeletonServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Register the Example Repository Provider
-        $this->app->register(\Dba\DddSkeleton\Shared\Infrastructure\Laravel\Providers\RepositoryServiceProvider::class);
+        $this->app->register(RepositoryServiceProvider::class);
 
         $this->registerBuses();
     }

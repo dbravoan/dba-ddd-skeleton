@@ -19,7 +19,7 @@ final class UserGetController extends ApiController
         /** @var UserResponse|null $response */
         $response = $this->bus->ask(new FindUserQuery($id));
 
-        if (null === $response) {
+        if ($response === null) {
             return $this->sendError('User not found', [], 404);
         }
 

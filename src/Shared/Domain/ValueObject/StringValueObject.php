@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Domain\ValueObject;
 
-abstract class StringValueObject
+/**
+ * @phpstan-consistent-constructor
+ */
+abstract readonly class StringValueObject
 {
     public function __construct(protected string $value) {}
 

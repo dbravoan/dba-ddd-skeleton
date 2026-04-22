@@ -6,6 +6,4 @@ namespace Dba\DddSkeleton\Identity\User\Domain;
 
 use Dba\DddSkeleton\Shared\Domain\ValueObject\Uuid;
 
-final class UserId extends Uuid
-{
-}
+final readonly class UserId extends Uuid {}

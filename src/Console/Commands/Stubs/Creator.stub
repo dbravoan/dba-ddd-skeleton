@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Application\Create;
+
+use {{namespace}}\Domain\{{module}};
+use {{namespace}}\Domain\{{module}}Id;
+use {{namespace}}\Domain\{{module}}Name;
+use {{namespace}}\Domain\{{module}}Repository;
+
+final class {{module}}Creator
+{
+    public function __construct(private readonly {{module}}Repository $repository) {}
+
+    public function __invoke({{module}}Id $id, {{module}}Name $name): void
+    {
+        ${{module_lc}} = {{module}}::create($id, $name);
+
+        $this->repository->save(${{module_lc}});
+    }
+}

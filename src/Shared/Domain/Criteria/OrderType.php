@@ -7,7 +7,9 @@ namespace Dba\DddSkeleton\Shared\Domain\Criteria;
 final class OrderType
 {
     public const ASC = 'asc';
+
     public const DESC = 'desc';
+
     public const NONE = 'none';
 
     public function __construct(private readonly string $value) {}

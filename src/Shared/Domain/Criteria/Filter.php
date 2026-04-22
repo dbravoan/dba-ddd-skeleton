@@ -12,12 +12,23 @@ final class Filter
         private readonly FilterValue $value
     ) {}
 
+    /**
+     * @param array<string, mixed> $values
+     */
     public static function fromValues(array $values): self
     {
+        $field = $values['field'];
+        $operator = $values['operator'];
+        $value = $values['value'];
+
+        if (! is_string($field) || ! is_string($operator) || ! is_string($value)) {
+            throw new \InvalidArgumentException('Filter field, operator and value must be strings');
+        }
+
         return new self(
-            new FilterField($values['field']),
-            new FilterOperator($values['operator']),
-            new FilterValue($values['value'])
+            new FilterField($field),
+            new FilterOperator($operator),
+            new FilterValue($value)
         );
     }
 
@@ -34,5 +45,19 @@ final class Filter
     public function value(): FilterValue
     {
         return $this->value;
+    }
+
+    public function serialize(): string
+    {
+        $field = $this->field->value();
+        $operator = $this->operator->value();
+        $value = $this->value->value();
+
+        return sprintf(
+            '%s.%s.%s',
+            $field,
+            $operator,
+            is_scalar($value) ? (string) $value : ''
+        );
     }
 }

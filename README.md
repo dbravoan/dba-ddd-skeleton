@@ -14,7 +14,7 @@ Este paquete no es solo una colección de archivos; es una propuesta arquitectó
 
 ---
 
-## 📚 Introducción Teórica
+## 📚 Introducción teórica
 
 ### ¿Por qué complicarnos la vida?
 
@@ -22,9 +22,9 @@ En un proyecto pequeño (CRUD), el patrón MVC estándar de Laravel es perfecto.
 
 1. **Acoplamiento**: Tu lógica de negocio depende de Eloquent, de las Requests HTTP y del Framework. Si mañana quieres cambiar algo, sufres.
 2. **Testabilidad**: Para testear una regla de negocio simple, necesitas levantar todo el framework (Feature Tests lentos) en lugar de testear la clase aislada (Unit Tests rápidos).
-3. **Mantenibilidad**: ¿Dónde está la lógica de "Calcular Precio con Descuento"? ¿En el Modelo? ¿En el Controlador? ¿En un Helper?
+3. **Mantenibilidad**: ¿Dónde está la lógica de "Calcular precio con descuento"? ¿En el modelo? ¿En el controlador? ¿En un helper?
 
-### La Solución: Capas Concéntricas
+### La solución: capas concéntricas
 
 Este esqueleto propone dividir tu código en tres capas con responsabilidades claras y estrictas:
 
@@ -34,23 +34,23 @@ Este esqueleto propone dividir tu código en tres capas con responsabilidades cl
 
 2. **Aplicación (`Application`)**:
     - *Qué es*: Los casos de uso de tu sistema. "Crear Usuario", "Buscar Producto", "Aplicar Descuento".
-    - *Cómo funciona*: Recibe una petición (DTO), orquesta las entidades del Dominio y persiste los cambios usando Interfaces.
-    - *Estructura*: Bus de Comandos (Command/Query + Handler) o Servicios de Aplicación.
+    - *Cómo funciona*: Recibe una petición (DTO), orquesta las entidades del dominio y persiste los cambios usando interfaces.
+    - *Estructura*: Bus de comandos (Command/Query + Handler) o servicios de aplicación.
 
 3. **Infraestructura (`Infrastructure`)**:
     - *Qué es*: El mundo real. La implementación técnica.
-    - *Componentes*: Controladores HTTP, Implementaciones de Repositorios (Eloquent), Colas (Redis), APIs externas.
-    - *Responsabilidad*: Conectar el mundo exterior con tu capa de Aplicación.
+    - *Componentes*: Controladores HTTP, implementaciones de repositorios (Eloquent), colas (Redis), APIs externas.
+    - *Responsabilidad*: Conectar el mundo exterior con tu capa de aplicación.
 
 ---
 
 ## 🚀 Características
 
-- **Separación Estricta de Capas**: Domain, Application e Infrastructure.
-- **Generadores de Código**: Comandos `artisan` para crear módulos completos con un solo comando.
-- **Domain Events**: Publicación automática de eventos de dominio desde el repositorio. Tu lógica nunca se olvida de publicar.
-- **Criteria Pattern**: Sistema de filtros, ordenación y paginación avanzado y desacoplado de Eloquent.
-- **Bus de Mensajes**: Abstracciones para Command Bus, Query Bus y Event Bus con implementaciones nativas de Laravel.
+- **Separación estricta de capas**: Domain, Application e Infrastructure.
+- **Generadores de código**: Comandos `artisan` para crear módulos completos con un solo comando.
+- **Domain events**: Publicación automática de eventos de dominio desde el repositorio. Tu lógica nunca se olvida de publicar.
+- **Criteria pattern**: Sistema de filtros, ordenación y paginación avanzado y desacoplado de Eloquent.
+- **Bus de mensajes**: Abstracciones para Command Bus, Query Bus y Event Bus con implementaciones nativas de Laravel.
 - **Repositorios**: Interfaces y contratos para desacoplar la persistencia.
 - **Value Objects**: Primitivos de dominio listos para usar (Uuid, Email, etc.).
 
@@ -64,7 +64,7 @@ Requiere el paquete en tu proyecto Laravel:
 composer require dbravoan/dba-ddd-skeleton
 ```
 
-### Publicar Configuración (Opcional)
+### Publicar configuración (opcional)
 
 Si necesitas personalizar los stubs (plantillas de código) que usa el generador:
 
@@ -74,9 +74,9 @@ php artisan vendor:publish --tag=dba-ddd-skeleton-stubs
 
 ---
 
-## 🛠️ Configuración Inicial
+## 🛠️ Configuración inicial
 
-### 1. Estructura de Directorios
+### 1. Estructura de directorios
 
 Por defecto, este paquete asume que tu código de dominio vivirá en `src/`, fuera de la carpeta `app/` estándar de Laravel, para mantenerlo agnóstico al framework.
 
@@ -105,7 +105,7 @@ El paquete incluye un `DddSkeletonServiceProvider` que se auto-descubre. Registr
 
 Para registrar tus propios handlers y repositorios, consulta la sección **[Service Providers](#-service-providers-organización-del-contenedor)**.
 
-### 3. Qué incluye el Paquete
+### 3. Qué incluye el paquete
 
 ```text
 Shared/
@@ -135,7 +135,7 @@ Shared/
 
 ---
 
-## 💡 Uso: Creando un Nuevo Módulo
+## 💡 Uso: creando un nuevo módulo
 
 La funcionalidad estrella de este paquete es el generador de módulos. Olvida crear carpetas y archivos a mano.
 
@@ -162,7 +162,7 @@ src/Catalog/Product/
 │   ├── ProductCreatedDomainEvent.php   # Evento de dominio
 │   ├── ProductId.php                   # Value Object
 │   ├── ProductName.php                 # Value Object
-│   └── ProductRepository.php          # Interfaz del Repositorio
+│   └── ProductRepository.php          # Interfaz del repositorio
 └── Infrastructure/
     ├── Controller/
     │   ├── CreateProductController.php
@@ -174,17 +174,17 @@ src/Catalog/Product/
         └── EloquentProductRepository.php
 ```
 
-### Inyección de Dependencias
+### Inyección de dependencias
 
-Para que Laravel sepa qué implementación usar cuando inyectas una interfaz de dominio, debes hacer el binding en un ServiceProvider. Consulta la sección **[Service Providers](#-service-providers-organización-del-contenedor)** para ver cómo crear un `RepositoryServiceProvider` y un `DomainServiceProvider` dedicados.
+Para que Laravel sepa qué implementación usar cuando inyectas una interfaz de dominio, debes hacer el binding en un ServiceProvider. Consulta la sección **[Service providers](#-service-providers-organización-del-contenedor)** para ver cómo crear un `RepositoryServiceProvider` y un `DomainServiceProvider` dedicados.
 
 ---
 
-## 🏗️ Anatomía de un Caso de Uso (Ej: Crear Producto)
+## 🏗️ Anatomía de un caso de uso (ej: Crear producto)
 
 Veamos el flujo de datos completo para entender el desacoplamiento:
 
-1. **El Controlador (`Infrastructure`)**
+1. **El controlador (`Infrastructure`)**
     Recibe el Request HTTP. Su única misión es extraer los datos, encapsularlos en un DTO (*Command*) y despacharlos al Bus.
 
     ```php
@@ -195,7 +195,7 @@ Veamos el flujo de datos completo para entender el desacoplamiento:
     }
     ```
 
-2. **El Comando (`Application`)**
+2. **El comando (`Application`)**
     Es un DTO (Data Transfer Object) inmutable. Solo transporta datos, no tiene lógica.
 
     ```php
@@ -205,8 +205,8 @@ Veamos el flujo de datos completo para entender el desacoplamiento:
     }
     ```
 
-3. **El Manejador (`Application`)**
-    Recibe el Comando y ejecuta la lógica. Orquesta el dominio.
+3. **El manejador (`Application`)**
+    Recibe el comando y ejecuta la lógica. Orquesta el dominio.
 
     ```php
     final class CreateProductCommandHandler {
@@ -221,7 +221,7 @@ Veamos el flujo de datos completo para entender el desacoplamiento:
 
     *Nota: Aquí usamos la interfaz `ProductRepository`, no Eloquent directamente. Esto nos permite testear este Handler con un MockRepository sin tocar la base de datos.*
 
-4. **El Repositorio (`Infrastructure`)**
+4. **El repositorio (`Infrastructure`)**
     La implementación real que habla con la base de datos. Además, **publica automáticamente los eventos de dominio** tras persistir el agregado.
 
     ```php
@@ -240,11 +240,11 @@ Veamos el flujo de datos completo para entender el desacoplamiento:
 
 ---
 
-## 📣 Domain Events: Publicación Automática
+## 📣 Domain events: publicación automática
 
 Los Domain Events son la forma en que un agregado comunica que algo ha ocurrido en el dominio. Este skeleton implementa el patrón de forma **automática y transparente** desde la capa de infraestructura.
 
-### Flujo Completo
+### Flujo completo
 
 ```mermaid
 sequenceDiagram
@@ -266,13 +266,13 @@ sequenceDiagram
 
 ### ¿Cómo funciona?
 
-1. **El Agregado graba eventos** — Al ejecutar una acción de dominio (ej: `Product::create()`), la entidad llama internamente a `$this->record(new ProductCreatedDomainEvent(...))`. Los eventos se acumulan en memoria.
+1. **El agregado graba eventos** — Al ejecutar una acción de dominio (ej: `Product::create()`), la entidad llama internamente a `$this->record(new ProductCreatedDomainEvent(...))`. Los eventos se acumulan en memoria.
 
-2. **El Repositorio publica** — Tras persistir el agregado, el repositorio llama a `$this->publishEvents($product)`. Este método (heredado de `EloquentRepository`) hace `pullDomainEvents()` del agregado y los envía al `EventBus`.
+2. **El repositorio publica** — Tras persistir el agregado, el repositorio llama a `$this->publishEvents($product)`. Este método (heredado de `EloquentRepository`) hace `pullDomainEvents()` del agregado y los envía al `EventBus`.
 
 3. **El EventBus despacha** — El bus recorre los subscribers registrados y ejecuta la lógica reactiva (enviar email, actualizar caché, sincronizar otro bounded context, etc.).
 
-### Anatomía de un Domain Event
+### Anatomía de un domain event
 
 Cada módulo genera automáticamente su evento `Created`. Puedes crear más eventos siguiendo el mismo patrón:
 
@@ -305,7 +305,7 @@ final class ProductCreatedDomainEvent extends DomainEvent
 El `DddSkeletonServiceProvider` ya registra automáticamente el `LaravelEventBus` como implementación de `EventBus`. Solo necesitas **etiquetar tus subscribers** para que el bus los descubra:
 
 ```php
-// En tu DomainServiceProvider (ver sección Service Providers)
+// En tu DomainServiceProvider (ver sección Service providers)
 $this->app->tag([
     SendWelcomeEmailOnUserCreated::class,
     CreateAuditLogOnUserCreated::class,
@@ -316,7 +316,7 @@ $this->app->tag([
 
 ---
 
-## 🔧 Service Providers: Organización del Contenedor
+## 🔧 Service providers: organización del contenedor
 
 Para mantener la arquitectura limpia y desacoplada, recomendamos crear **dos Service Providers dedicados** en tu aplicación Laravel. Estos no vienen en el paquete — los creas tú porque contienen los bindings específicos de **tu** dominio.
 
@@ -431,7 +431,7 @@ final class DomainServiceProvider extends ServiceProvider
 }
 ```
 
-### Registrar los Providers
+### Registrar los providers
 
 Añade ambos en tu `bootstrap/providers.php` (Laravel 11+) o `config/app.php`:
 
@@ -452,7 +452,7 @@ return [
 ],
 ```
 
-### Crear un Domain Event Subscriber
+### Crear un domain event subscriber
 
 Un subscriber reacciona a uno o más eventos de dominio. Implementa `DomainEventSubscriber` y define `subscribedTo()` con los eventos que escucha:
 
@@ -484,9 +484,9 @@ final class SendWelcomeEmailOnUserCreated implements DomainEventSubscriber
 
 ---
 
-## ⚡ EventBus: Síncrono vs Asíncrono
+## ⚡ EventBus: síncrono vs asíncrono
 
-### Modo Síncrono (por defecto)
+### Modo síncrono (por defecto)
 
 El `LaravelEventBus` que registra el paquete es **síncrono**: cuando el repositorio llama a `publishEvents()`, los subscribers se ejecutan **inmediatamente** en el mismo proceso PHP.
 
@@ -505,9 +505,9 @@ sequenceDiagram
     EB-->>R: ✓
 ```
 
-**Ideal para**: Side-effects rápidos (actualizar caché, escribir log, incrementar contador).
+**Ideal para**: side-effects rápidos (actualizar caché, escribir log, incrementar contador).
 
-### Modo Asíncrono (Colas de Laravel)
+### Modo asíncrono (colas de Laravel)
 
 Para tareas pesadas (enviar emails, generar PDFs, llamar a APIs externas), el paquete incluye `LaravelQueueEventBus` y `ProcessDomainEventJob`. Los eventos se serializan a primitivos para un transporte seguro por colas y se reconstruyen vía `fromPrimitives()` en el worker.
 
@@ -553,27 +553,27 @@ php artisan queue:work --queue=domain_events
 ```
 
 **Beneficios del modo asíncrono:**
-- **Resiliencia**: Si un subscriber falla, el job reintenta automáticamente.
-- **Escalabilidad**: Múltiples workers procesando eventos en servidores separados.
-- **Experiencia de Usuario**: Las respuestas HTTP no esperan a side-effects lentos.
+- **Resiliencia**: si un subscriber falla, el job reintenta automáticamente.
+- **Escalabilidad**: múltiples workers procesando eventos en servidores separados.
+- **Experiencia de usuario**: las respuestas HTTP no esperan a side-effects lentos.
 
 ---
 
-## 🔍 Patrón Criteria: Búsquedas Flexibles
+## 🔍 Patrón Criteria: búsquedas flexibles
 
 El módulo genera automáticamente un sistema de búsqueda potente capaz de interpretar filtros complejos, ordenación y paginación desde la Query String.
 
-### Estructura de la Petición
+### Estructura de la petición
 
-El sistema soporta dos modos de filtrado: **Simple** (compatible hacia atrás) y **Avanzado** (Grupos y Condiciones anidadas).
+El sistema soporta dos modos de filtrado: **simple** (compatible hacia atrás) y **avanzado** (grupos y condiciones anidadas).
 
-#### 1. Modo Simple (Flat)
+#### 1. Modo simple (flat)
 
 Ideal para filtros rápidos con `AND`.
 
 `GET /products?filters[0][field]=name&filters[0][operator]=CONTAINS&filters[0][value]=Mesa`
 
-#### 2. Modo Avanzado (Grupos y Lógica Booleana)
+#### 2. Modo avanzado (grupos y lógica booleana)
 
 Permite construir consultas complejas con paréntesis, `AND` y `OR`.
 
@@ -596,27 +596,27 @@ filters[groups][1][conditions][0][value]=AFSantos
 glue=AND (Pegamento entre los grupos principales)
 ```
 
-### Mapeo Interno
+### Mapeo interno
 
-1. **RequestCriteriaBuilder**: Intercepta la `Request`, decodifica el JSON de `filters` y construye un objeto de valor `Criteria` inmutable.
-2. **Criteria Pass**: Este objeto viaja desde el Controller -> Query -> Handler -> Searcher -> Repository.
-3. **Eloquent Converter**: En la infraestructura, el repositorio convierte `Criteria` a sentencias SQL.
+1. **RequestCriteriaBuilder**: intercepta la `Request`, decodifica el JSON de `filters` y construye un objeto de valor `Criteria` inmutable.
+2. **Criteria Pass**: este objeto viaja desde el Controller -> Query -> Handler -> Searcher -> Repository.
+3. **Eloquent Converter**: en la infraestructura, el repositorio convierte `Criteria` a sentencias SQL.
 
 ```php
-// En tu Controlador
+// En tu controlador
 $criteria = $this->requestCriteriaBuilder->buildFromRequest($request);
 // $criteria ahora contiene objetos de dominio Filter, Order, etc. desacoplados de HTTP.
 ```
 
 ---
 
-## 🧠 Arquitectura del Bus
+## 🧠 Arquitectura del bus
 
-Una de las joyas de esta arquitectura es la **transparencia de ubicación**. Tu lógica de negocio (Handler) no sabe *dónde* ni *cuándo* se ejecuta.
+Una de las joyas de esta arquitectura es la **transparencia de ubicación**. Tu lógica de negocio (handler) no sabe *dónde* ni *cuándo* se ejecuta.
 
 ### Command Bus y Query Bus
 
-El paquete registra `LaravelCommandBus` y `LaravelQueryBus` como singletons. Ambos usan **reflexión** para mapear automáticamente cada Command/Query a su Handler según el type-hint del parámetro `__invoke()`.
+El paquete registra `LaravelCommandBus` y `LaravelQueryBus` como singletons. Ambos usan **reflexión** para mapear automáticamente cada Command/Query a su handler según el type-hint del parámetro `__invoke()`.
 
 ```mermaid
 sequenceDiagram
@@ -629,32 +629,129 @@ sequenceDiagram
     Controller-->>Client: JSON Response
 ```
 
-Para que un Handler sea descubierto por el bus, debe estar etiquetado en tu `DomainServiceProvider`:
+Para que un handler sea descubierto por el bus, debe estar etiquetado en tu `DomainServiceProvider`:
 
 ```php
 $this->app->tag(CreateProductCommandHandler::class, 'dba_ddd.command_handler');
 $this->app->tag(FindProductQueryHandler::class, 'dba_ddd.query_handler');
 ```
 
-Si despachas un Command/Query sin handler registrado, el bus lanzará `CommandNotRegisteredError` o `QueryNotRegisteredError` respectivamente.
+Si despachas un comando/query sin handler registrado, el bus lanzará `CommandNotRegisteredError` o `QueryNotRegisteredError` respectivamente.
 
 ### Event Bus
 
-Para el EventBus, consulta la sección **[EventBus: Síncrono vs Asíncrono](#-eventbus-síncrono-vs-asíncrono)** donde se documenta tanto el modo síncrono (`LaravelEventBus`) como el asíncrono (`LaravelQueueEventBus`) incluidos en el paquete.
+Para el EventBus, consulta la sección **[EventBus: síncrono vs asíncrono](#-eventbus-síncrono-vs-asíncrono)** donde se documenta tanto el modo síncrono (`LaravelEventBus`) como el asíncrono (`LaravelQueueEventBus`) incluidos en el paquete.
 
 ---
 
-## 🧠 Glosario Rápido
+## 🧠 Glosario rápido
 
-- **Bounded Context**: Límite lógico de un subsistema (ej: "Facturación", "Catálogo").
-- **Aggregates**: Conjunto de entidades que se tratan como una unidad (ej: Producto + Variantes).
-- **Value Objects**: Objetos que se identifican por su valor, no por ID (ej: Email, Precio, Coordenada). Son inmutables.
-- **Domain Events**: Notificaciones de que algo ha ocurrido en el dominio (ej: `UserCreated`, `OrderShipped`). Se publican automáticamente desde el repositorio.
-- **DTO (Data Transfer Object)**: Objeto simple para mover datos entre capas (Commands/Queries).
-- **EventBus**: Infraestructura que despacha Domain Events a sus subscribers. El paquete incluye `LaravelEventBus` (síncrono) y `LaravelQueueEventBus` (asíncrono vía colas de Laravel).
+- **Bounded Context**: límite lógico de un subsistema (ej: "Facturación", "Catálogo").
+- **Aggregates**: conjunto de entidades que se tratan como una unidad (ej: Producto + Variantes).
+- **Value Objects**: objetos que se identifican por su valor, no por ID (ej: Email, Precio, Coordenada). Son inmutables.
+- **Domain events**: notificaciones de que algo ha ocurrido en el dominio (ej: `UserCreated`, `OrderShipped`). Se publican automáticamente desde el repositorio.
+- **DTO (Data Transfer Object)**: objeto simple para mover datos entre capas (Commands/Queries).
+- **EventBus**: infraestructura que despacha domain events a sus subscribers. El paquete incluye `LaravelEventBus` (síncrono) y `LaravelQueueEventBus` (asíncrono vía colas de Laravel).
 
 ---
 
-## Licencia
+## 📖 Documentación adicional
+
+- [Dominando el patrón Criteria](DOCS/CriteriaPattern.md)
+- [Procesamiento de eventos asíncronos](DOCS/EventProcessing.md)
+- [Mejores prácticas en el diseño de agregados](DOCS/AggregateDesign.md)
+
+---
+
+## 🍳 Cookbook: patrones comunes
+
+### 1. Manejo de errores de dominio
+Define tus propios errores extendiendo de `DomainError`. El `ApiController` los mapeará automáticamente si configuras el `exceptionHandler`.
+
+```php
+// Dominio
+final class ProductNotFound extends NotFoundDomainError {
+    public function errorCode(): string { return 'product_not_found'; }
+    protected function errorMessage(): string { return 'El producto no existe'; }
+}
+
+// En tu controlador
+try {
+    $this->bus->dispatch($command);
+} catch (DomainError $e) {
+    return $this->sendError($e->getMessage(), [], 404);
+}
+```
+
+### 2. Uso de enums nativos (PHP 8.1+)
+Puedes integrar enums nativos con los value objects de dominio:
+
+```php
+enum UserStatus: string {
+    case ACTIVE = 'active';
+    case INACTIVE = 'inactive';
+}
+
+final readonly class UserStatusVO extends Enum {
+    public static function fromNative(UserStatus $status): self {
+        return new self($status->value);
+    }
+}
+```
+
+### 3. Generación de módulos con servicios de aplicación
+Si prefieres que la lógica no viva directamente en el handler, usa el flag `--application-service`:
+
+```bash
+php artisan dba:make:module Catalog Category --application-service
+```
+Esto generará un `CategoryCreator` (servicio de aplicación) que el `CreateCategoryCommandHandler` utilizará.
+
+### 4. Uso del RequestCriteriaBuilder
+Construye criterios complejos directamente desde una Request de Laravel:
+
+```php
+public function __invoke(Request $request): JsonResponse {
+    $builder = new RequestCriteriaBuilder(['name', 'email', 'created_at']);
+    $criteria = $builder->build($request);
+    
+    $results = $this->repository->searchByCriteria($criteria);
+    return $this->sendResponse($results, 'OK');
+}
+```
+
+### 5. Repositorios de archivos (file persistence)
+El skeleton incluye una base para persistencia en archivos (JSON/CSV/XML), ideal para prototipado rápido:
+
+```php
+final class FileCategoryRepository extends FileRepository implements CategoryRepository {
+    protected function extension(): string { return 'json'; }
+}
+```
+
+---
+
+## 🛠️ Desarrollo y calidad
+
+El proyecto mantiene altos estándares de calidad:
+
+- **PHPStan**: análisis estático en Nivel 9 (Máximo).
+- **Pint**: estilo de código preconfigurado.
+- **PHPUnit**: suite de tests completa.
+
+Para ejecutar el análisis:
+```bash
+composer lint    # Laravel Pint
+composer test    # PHPUnit
+composer analyze # PHPStan
+```
+
+## 🙏 Agradecimientos / Saludos
+
+Gran parte de la inspiración, los patrones y el aprendizaje para la creación de este skeleton provienen de **Codely** (CodelyTV). ¡Milenta gracies!
+
+---
+
+## 📄 Licencia
 
 Este paquete es software open-source bajo licencia [MIT](LICENSE).

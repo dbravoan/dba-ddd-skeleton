@@ -13,6 +13,11 @@ final class QueryNotRegisteredError extends RuntimeException
     {
         $queryClass = $query::class;
 
-        parent::__construct("The query <$queryClass> hasn't a query handler associated");
+        parent::__construct(sprintf(
+            "The query <%s> does not have a query handler associated. ".
+            "Make sure you have registered the handler in your ServiceProvider and tagged it (if using automatic registration) ".
+            "or passed it to the LaravelQueryBus constructor.",
+            $queryClass
+        ));
     }
 }

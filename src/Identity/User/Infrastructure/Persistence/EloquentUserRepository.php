@@ -7,30 +7,27 @@ namespace Dba\DddSkeleton\Identity\User\Infrastructure\Persistence;
 use Dba\DddSkeleton\Identity\User\Domain\User;
 use Dba\DddSkeleton\Identity\User\Domain\UserId;
 use Dba\DddSkeleton\Identity\User\Domain\UserRepository;
-use Dba\DddSkeleton\Shared\Domain\Bus\Event\EventBus;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
+use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteria;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteriaConverter;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentRepository;
 use Illuminate\Database\Eloquent\Model;
 
-use function Lambdish\Phunctional\map;
-
+/**
+ * @extends EloquentRepository<UserModel>
+ */
 final class EloquentUserRepository extends EloquentRepository implements UserRepository
 {
-    private static array $toEloquentFields = [
+    /** @var array<string, string> */
+    protected array $toEloquentFields = [
         'id'    => 'id',
         'email' => 'email',
         'name'  => 'name',
     ];
 
-    public function __construct(Model $model, EventBus $eventBus)
-    {
-        parent::__construct($model, $eventBus);
-    }
-
     public function save(User $user): void
     {
-        $this->model->updateOrCreate(
+        $this->newQuery()->updateOrCreate(
             ['id' => $user->id()->value()],
             $user->toPrimitives()
         );
@@ -38,46 +35,46 @@ final class EloquentUserRepository extends EloquentRepository implements UserRep
         $this->publishEvents($user);
     }
 
-    public function remove(UserId $id): void
-    {
-        $this->model->destroy($id->value());
-    }
-
     public function search(UserId $id): ?User
     {
-        $model = $this->model->find($id->value());
+        /** @var UserModel|null $model */
+        $model = $this->newQuery()->find($id->value());
 
         return $model ? $this->toDomain($model->toArray()) : null;
     }
 
+    /** @return array<int, User> */
     public function searchByCriteria(Criteria $criteria): array
     {
-        $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, self::$toEloquentFields);
-        $query = $this->model->newQuery();
+        /** @var EloquentCriteria<UserModel> $eloquentCriteria */
+        $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, $this->toEloquentFields);
 
-        $eloquentCriteria->each(static function ($method) use ($query) {
-            call_user_func_array([$query, $method->name], $method->parameters);
-        });
+        $models = $this->matching($eloquentCriteria)->get();
 
-        $results = $query->get()->toArray();
-
-        return map(fn(array $row) => $this->toDomain($row), $results);
+        return array_map(
+            fn (Model $model) => $this->toDomain($model->toArray()),
+            $models->all()
+        );
     }
 
-    public function countByCriteria(Criteria $criteria): int
+    public function delete(UserId $id): bool
     {
-        $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, self::$toEloquentFields);
-        $query = $this->model->newQuery();
-
-        $eloquentCriteria->each(static function ($method) use ($query) {
-            call_user_func_array([$query, $method->name], $method->parameters);
-        });
-
-        return $query->count();
+        return (bool) $this->newQuery()->where('id', $id->value())->delete();
     }
 
+    /** @param array<string, mixed> $primitives */
     private function toDomain(array $primitives): User
     {
         return User::fromPrimitives($primitives);
     }
+}
+
+/**
+ * Stub/Proxy for User model since this is a package.
+ * In a real app, this would be a real Eloquent Model.
+ */
+class UserModel extends Model
+{
+    protected $table = 'users';
+    protected $guarded = [];
 }

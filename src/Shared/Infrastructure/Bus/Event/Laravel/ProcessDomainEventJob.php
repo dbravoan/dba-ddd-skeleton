@@ -15,8 +15,8 @@ final class ProcessDomainEventJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     /**
-     * Serialized event data for safe queue transport.
-     * DomainEvent objects are reconstructed via fromPrimitives() on the worker side.
+     * @param class-string<DomainEvent> $eventClass
+     * @param array<string, mixed> $body
      */
     public function __construct(
         private readonly string $eventClass,
@@ -43,6 +43,7 @@ final class ProcessDomainEventJob implements ShouldQueue
      */
     public function handle(LaravelEventBus $syncBus): void
     {
+        /** @var DomainEvent $event */
         $event = ($this->eventClass)::fromPrimitives(
             $this->aggregateId,
             $this->body,

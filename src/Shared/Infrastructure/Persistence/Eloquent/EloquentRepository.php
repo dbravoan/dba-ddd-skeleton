@@ -6,10 +6,12 @@ namespace Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent;
 
 use Dba\DddSkeleton\Shared\Domain\Aggregate\AggregateRoot;
 use Dba\DddSkeleton\Shared\Domain\Bus\Event\EventBus;
+use Dba\DddSkeleton\Shared\Infrastructure\Persistence\QueryBuilder\Method;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -17,21 +19,20 @@ use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Throwable;
 
+/**
+ * @template TModel of Model
+ */
 abstract class EloquentRepository
 {
     /**
-     * $model.
-     *
-     * @var Model|Builder
+     * @var TModel|Builder<TModel>
      */
-    protected $model;
+    protected Model|Builder $model;
 
     /**
-     * __construct.
-     *
-     * @param Model|Builder $model
+     * @param  TModel|Builder<TModel>  $model
      */
-    public function __construct($model, private readonly ?EventBus $eventBus = null)
+    public function __construct(Model|Builder $model, private readonly ?EventBus $eventBus = null)
     {
         $this->model = $model;
     }
@@ -48,157 +49,193 @@ abstract class EloquentRepository
     /**
      * Find a model by its primary key.
      *
-     * @param mixed $id
-     * @param array $columns
-     * @return Model
+     * @param  mixed  $id
+     * @param  array<int, string>  $columns
+     * @return TModel|null
      */
-    public function find($id, $columns = ['*'])
+    public function find(mixed $id, array $columns = ['*']): ?Model
     {
-        return $this->newQuery()->find($id, $columns);
+        /** @var TModel|null $result */
+        $result = $this->newQuery()->find($id, $columns);
+
+        return $result;
     }
 
     /**
      * Find multiple models by their primary keys.
      *
-     * @param Arrayable|array $ids
-     * @param array $columns
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param  Arrayable<int, mixed>|array<int, mixed>  $ids
+     * @param  array<int, string>  $columns
+     * @return EloquentCollection<int, TModel>
      */
-    public function findMany($ids, $columns = ['*'])
+    public function findMany(Arrayable|array $ids, array $columns = ['*']): EloquentCollection
     {
-        return $this->newQuery()->findMany($ids, $columns);
+        /** @var EloquentCollection<int, TModel> $result */
+        $result = $this->newQuery()->findMany($ids, $columns);
+
+        return $result;
     }
 
     /**
      * Find a model by its primary key or throw an exception.
      *
-     * @param mixed $id
-     * @param array $columns
-     * @return Model
+     * @param  mixed  $id
+     * @param  array<int, string>  $columns
+     * @return TModel
      *
      * @throws ModelNotFoundException
      */
-    public function findOrFail($id, $columns = ['*'])
+    public function findOrFail(mixed $id, array $columns = ['*']): Model
     {
-        return $this->newQuery()->findOrFail($id, $columns);
+        /** @var TModel $result */
+        $result = $this->newQuery()->findOrFail($id, $columns);
+
+        return $result;
     }
 
     /**
      * Find a model by its primary key or return fresh model instance.
      *
-     * @param mixed $id
-     * @param array $columns
-     * @return Model
+     * @param  mixed  $id
+     * @param  array<int, string>  $columns
+     * @return TModel
      */
-    public function findOrNew($id, $columns = ['*'])
+    public function findOrNew(mixed $id, array $columns = ['*']): Model
     {
-        return $this->newQuery()->findOrNew($id, $columns);
+        /** @var TModel $result */
+        $result = $this->newQuery()->findOrNew($id, $columns);
+
+        return $result;
     }
 
     /**
      * Get the first record matching the attributes or instantiate it.
      *
-     * @param array $attributes
-     * @param array $values
-     * @return Model
+     * @param array<string, mixed> $attributes
+     * @param array<string, mixed> $values
+     * @return TModel
      */
-    public function firstOrNew(array $attributes, array $values = [])
+    public function firstOrNew(array $attributes, array $values = []): Model
     {
-        return $this->newQuery()->firstOrNew($attributes, $values);
+        /** @var TModel $result */
+        $result = $this->newQuery()->firstOrNew($attributes, $values);
+
+        return $result;
     }
 
     /**
      * Get the first record matching the attributes or create it.
      *
-     * @param array $attributes
-     * @param array $values
-     * @return Model
+     * @param array<string, mixed> $attributes
+     * @param array<string, mixed> $values
+     * @return TModel
      */
-    public function firstOrCreate(array $attributes, array $values = [])
+    public function firstOrCreate(array $attributes, array $values = []): Model
     {
-        return $this->newQuery()->firstOrCreate($attributes, $values);
+        /** @var TModel $result */
+        $result = $this->newQuery()->firstOrCreate($attributes, $values);
+
+        return $result;
     }
 
     /**
      * Create or update a record matching the attributes, and fill it with values.
      *
-     * @param array $attributes
-     * @param array $values
-     * @return Model
+     * @param array<string, mixed> $attributes
+     * @param array<string, mixed> $values
+     * @return TModel
      */
-    public function updateOrCreate(array $attributes, array $values = [])
+    public function updateOrCreate(array $attributes, array $values = []): Model
     {
-        return $this->newQuery()->updateOrCreate($attributes, $values);
+        /** @var TModel $result */
+        $result = $this->newQuery()->updateOrCreate($attributes, $values);
+
+        return $result;
     }
 
     /**
      * Execute the query and get the first result or throw an exception.
      *
-     * @param Criteria[] $criteria
-     * @param array $columns
-     * @return Model
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  array<int, string>  $columns
+     * @return TModel
      *
      * @throws ModelNotFoundException
      */
-    public function firstOrFail($criteria = [], $columns = ['*'])
+    public function firstOrFail(EloquentCriteria|array $criteria = [], array $columns = ['*']): Model
     {
-        return $this->matching($criteria)->firstOrFail($columns);
+        /** @var TModel $result */
+        $result = $this->matching($criteria)->firstOrFail($columns);
+
+        return $result;
     }
 
     /**
      * create.
      *
-     * @param array $attributes
-     * @return Model
+     * @param  array<string, mixed>  $attributes
+     * @return TModel
      *
      * @throws Throwable
      */
-    public function create($attributes)
+    public function create(array $attributes): Model
     {
-        return $this->newQuery()->create($attributes);
+        /** @var TModel $result */
+        $result = $this->newQuery()->create($attributes);
+
+        return $result;
     }
 
     /**
      * Save a new model and return the instance.
      *
-     * @param array $attributes
-     * @return Model
+     * @param  array<string, mixed>  $attributes
+     * @return TModel
      *
      * @throws Throwable
      */
-    public function forceCreate($attributes)
+    public function forceCreate(array $attributes): Model
     {
-        return $this->newQuery()->forceCreate($attributes);
+        /** @var TModel $result */
+        $result = $this->newQuery()->forceCreate($attributes);
+
+        return $result;
     }
 
     /**
      * update.
      *
-     * @param array $attributes
-     * @param mixed $id
-     * @return Model
+     * @param  mixed  $id
+     * @param  array<string, mixed>  $attributes
+     * @return TModel
      *
      * @throws Throwable
      */
-    public function update($id, $attributes)
+    public function update(mixed $id, array $attributes): Model
     {
-        return tap($this->findOrFail($id), static function ($instance) use ($attributes) {
+        /** @var TModel $model */
+        $model = $this->findOrFail($id);
+
+        return tap($model, static function (Model $instance) use ($attributes) {
             $instance->fill($attributes)->saveOrFail();
         });
     }
 
     /**
-     * forceCreate.
+     * forceUpdate.
      *
-     * @param array $attributes
-     * @param mixed $id
-     * @return Model
+     * @param  mixed  $id
+     * @param  array<string, mixed>  $attributes
+     * @return TModel
      *
      * @throws Throwable
      */
-    public function forceUpdate($id, $attributes)
+    public function forceUpdate(mixed $id, array $attributes): Model
     {
-        return tap($this->findOrFail($id), static function ($instance) use ($attributes) {
+        /** @var TModel $model */
+        $model = $this->findOrFail($id);
+
+        return tap($model, static function (Model $instance) use ($attributes) {
             $instance->forceFill($attributes)->saveOrFail();
         });
     }
@@ -206,22 +243,28 @@ abstract class EloquentRepository
     /**
      * delete.
      *
-     * @param mixed $id
+     * @param  mixed  $id
+     * @return bool|null
      */
-    public function delete($id)
+    public function delete(mixed $id): ?bool
     {
-        return $this->find($id)->delete();
+        $model = $this->find($id);
+
+        return $model?->delete();
     }
 
     /**
      * Restore a soft-deleted model instance.
      *
-     * @param mixed $id
+     * @param  mixed  $id
      * @return bool|null
      */
-    public function restore($id)
+    public function restore(mixed $id): ?bool
     {
-        return $this->newQuery()->where($this->getModel()->getKeyName(), $id)->restore();
+        /** @var callable $callable */
+        $callable = [$this->newQuery()->where($this->getModel()->getKeyName(), $id), 'restore'];
+
+        return (bool) call_user_func($callable);
     }
 
     /**
@@ -229,21 +272,25 @@ abstract class EloquentRepository
      *
      * This method protects developers from running forceDelete when trait is missing.
      *
-     * @param mixed $id
+     * @param  mixed  $id
      * @return bool|null
      */
-    public function forceDelete($id)
+    public function forceDelete(mixed $id): ?bool
     {
-        return $this->findOrFail($id)->forceDelete();
+        /** @var TModel $model */
+        $model = $this->findOrFail($id);
+        /** @var callable $callable */
+        $callable = [$model, 'forceDelete'];
+
+        return (bool) call_user_func($callable);
     }
 
     /**
      * Create a new model instance that is existing.
      *
-     * @param array $attributes
-     * @return Model
+     * @param  array<string, mixed>  $attributes
      */
-    public function newInstance($attributes = [], $exists = false)
+    public function newInstance(array $attributes = [], bool $exists = false): Model
     {
         return $this->getModel()->newInstance($attributes, $exists);
     }
@@ -251,24 +298,27 @@ abstract class EloquentRepository
     /**
      * Execute the query as a "select" statement.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param array $columns
-     * @return Collection
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  array<int, string>  $columns
+     * @return EloquentCollection<int, TModel>
      */
-    public function get($criteria = [], $columns = ['*'])
+    public function get(EloquentCriteria|array $criteria = [], array $columns = ['*']): EloquentCollection
     {
-        return $this->matching($criteria)->get($columns);
+        /** @var EloquentCollection<int, TModel> $result */
+        $result = $this->matching($criteria)->get($columns);
+
+        return $result;
     }
 
     /**
      * Chunk the results of the query.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param int $count
-     * @param callable $callback
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  int  $count
+     * @param  callable(Collection<int, TModel>, int): mixed  $callback
      * @return bool
      */
-    public function chunk($criteria, $count, callable $callback)
+    public function chunk(EloquentCriteria|array $criteria, int $count, callable $callback): bool
     {
         return $this->matching($criteria)->chunk($count, $callback);
     }
@@ -276,12 +326,12 @@ abstract class EloquentRepository
     /**
      * Execute a callback over each item while chunking.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param callable $callback
-     * @param int $count
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  callable(TModel, int): bool  $callback
+     * @param  int  $count
      * @return bool
      */
-    public function each($criteria, callable $callback, $count = 1000)
+    public function each(EloquentCriteria|array $criteria, callable $callback, int $count = 1000): bool
     {
         return $this->matching($criteria)->each($callback, $count);
     }
@@ -289,116 +339,136 @@ abstract class EloquentRepository
     /**
      * Execute the query and get the first result.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param array $columns
-     * @return Model|null
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  array<int, string>  $columns
+     * @return TModel|null
      */
-    public function first($criteria = [], $columns = ['*'])
+    public function first(EloquentCriteria|array $criteria = [], array $columns = ['*']): ?Model
     {
-        return $this->matching($criteria)->first($columns);
+        /** @var TModel|null $result */
+        $result = $this->matching($criteria)->first($columns);
+
+        return $result;
     }
 
     /**
      * Paginate the given query.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param int $perPage
-     * @param array $columns
-     * @param string $pageName
-     * @param int|null $page
-     * @return LengthAwarePaginator
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  int|null  $perPage
+     * @param  array<int, string>  $columns
+     * @param  string  $pageName
+     * @param  int|null  $page
+     * @return LengthAwarePaginator<int, TModel>
      *
      * @throws InvalidArgumentException
      */
-    public function paginate($criteria = [], $perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
+    public function paginate(EloquentCriteria|array $criteria = [], ?int $perPage = null, array $columns = ['*'], string $pageName = 'page', ?int $page = null): LengthAwarePaginator
     {
-        return $this->matching($criteria)->paginate($perPage, $columns, $pageName, $page);
+        /** @var LengthAwarePaginator<int, TModel> $result */
+        $result = $this->matching($criteria)->paginate($perPage, $columns, $pageName, $page);
+
+        return $result;
     }
 
     /**
      * Paginate the given query into a simple paginator.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param int $perPage
-     * @param array $columns
-     * @param string $pageName
-     * @param int|null $page
-     * @return Paginator
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  int|null  $perPage
+     * @param  array<int, string>  $columns
+     * @param  string  $pageName
+     * @param  int|null  $page
+     * @return Paginator<int, TModel>
      */
-    public function simplePaginate($criteria = [], $perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
+    public function simplePaginate(EloquentCriteria|array $criteria = [], ?int $perPage = null, array $columns = ['*'], string $pageName = 'page', ?int $page = null): Paginator
     {
-        return $this->matching($criteria)->simplePaginate($perPage, $columns, $pageName, $page);
+        /** @var Paginator<int, TModel> $result */
+        $result = $this->matching($criteria)->simplePaginate($perPage, $columns, $pageName, $page);
+
+        return $result;
     }
 
     /**
      * Retrieve the "count" result of the query.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param string $columns
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  string|array<int, string>  $columns
      * @return int
      */
-    public function count($criteria = [], $columns = '*')
+    public function count(EloquentCriteria|array $criteria = [], string|array $columns = '*'): int
     {
+        if (is_array($columns)) {
+            $columns = implode(',', $columns);
+        }
+
         return (int) $this->matching($criteria)->count($columns);
     }
 
     /**
      * Retrieve the minimum value of a given column.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param string $column
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  string  $column
      * @return float|int
      */
-    public function min($criteria, $column)
+    public function min(EloquentCriteria|array $criteria, string $column): float|int
     {
-        return $this->matching($criteria)->min($column);
+        $result = $this->matching($criteria)->min($column);
+
+        return is_numeric($result) ? (float) $result : 0;
     }
 
     /**
      * Retrieve the maximum value of a given column.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param string $column
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  string  $column
      * @return float|int
      */
-    public function max($criteria, $column)
+    public function max(EloquentCriteria|array $criteria, string $column): float|int
     {
-        return $this->matching($criteria)->max($column);
+        $result = $this->matching($criteria)->max($column);
+
+        return is_numeric($result) ? (float) $result : 0;
     }
 
     /**
      * Retrieve the sum of the values of a given column.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param string $column
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  string  $column
      * @return float|int
      */
-    public function sum($criteria, $column)
+    public function sum(EloquentCriteria|array $criteria, string $column): float|int
     {
         $result = $this->matching($criteria)->sum($column);
 
-        return $result ?: 0;
+        return is_numeric($result) ? (float) $result : 0;
     }
 
     /**
      * Retrieve the average of the values of a given column.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @param string $column
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  string  $column
      * @return float|int
      */
-    public function avg($criteria, $column)
+    public function avg(EloquentCriteria|array $criteria, string $column): float|int
     {
-        return $this->matching($criteria)->avg($column);
+        $result = $this->matching($criteria)->avg($column);
+
+        return is_numeric($result) ? (float) $result : 0;
     }
 
     /**
      * Alias for the "avg" method.
      *
-     * @param string $column
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @param  string  $column
      * @return float|int
      */
-    public function average($criteria, $column)
+    public function average(EloquentCriteria|array $criteria, string $column): float|int
     {
         return $this->avg($criteria, $column);
     }
@@ -406,16 +476,21 @@ abstract class EloquentRepository
     /**
      * matching.
      *
-     * @param Criteria[]|Criteria $criteria
-     * @return Builder
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
+     * @return Builder<TModel>
      */
-    public function matching($criteria)
+    public function matching(EloquentCriteria|array $criteria): Builder
     {
-        $criteria = is_array($criteria) === false ? [$criteria] : $criteria;
+        /** @var EloquentCriteria<TModel>[] $criteriaList */
+        $criteriaList = is_array($criteria) ? $criteria : [$criteria];
 
-        return array_reduce($criteria, static function ($query, $criteria) {
-            $criteria->each(static function ($method) use ($query) {
-                call_user_func_array([$query, $method->name], $method->parameters);
+        return array_reduce($criteriaList, static function (Builder $query, EloquentCriteria $criteria) {
+            $criteria->each(static function (Method $method) use ($query) {
+                /** @var callable $callable */
+                $callable = [$query, $method->name];
+                /** @var array<int, mixed> $parameters */
+                $parameters = $method->parameters;
+                call_user_func_array($callable, $parameters);
             });
 
             return $query;
@@ -425,10 +500,10 @@ abstract class EloquentRepository
     /**
      * getQuery.
      *
-     * @param Criteria[] $criteria
+     * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
      * @return QueryBuilder
      */
-    public function getQuery($criteria = [])
+    public function getQuery(EloquentCriteria|array $criteria = []): QueryBuilder
     {
         return $this->matching($criteria)->getQuery();
     }
@@ -436,20 +511,26 @@ abstract class EloquentRepository
     /**
      * getModel.
      *
-     * @return Model
+     * @return TModel
      */
-    public function getModel()
+    public function getModel(): Model
     {
-        return $this->model instanceof Model ? clone $this->model : $this->model->getModel();
+        /** @var TModel $model */
+        $model = $this->model instanceof Model ? clone $this->model : $this->model->getModel();
+
+        return $model;
     }
 
     /**
      * Get a new query builder for the model's table.
      *
-     * @return Builder
+     * @return Builder<TModel>
      */
-    public function newQuery()
+    public function newQuery(): Builder
     {
-        return $this->model instanceof Model ? $this->model->newQuery() : clone $this->model;
+        /** @var Builder<TModel> $query */
+        $query = $this->model instanceof Model ? $this->model->newQuery() : clone $this->model;
+
+        return $query;
     }
 }

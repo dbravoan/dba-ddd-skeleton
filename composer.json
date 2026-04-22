@@ -29,7 +29,10 @@
         "ramsey/uuid": "^4.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+        "phpunit/phpunit": "^10.0|^11.0|^12.0",
+        "orchestra/testbench": "^10.11",
+        "phpstan/phpstan": "^2.1",
+        "laravel/pint": "^1.29"
     },
     "autoload": {
         "psr-4": {
@@ -40,6 +43,11 @@
         "psr-4": {
             "Dba\\DddSkeleton\\Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "analyze": "vendor/bin/phpstan analyze src --level 9",
+        "lint": "vendor/bin/pint"
     },
     "extra": {
         "laravel": {

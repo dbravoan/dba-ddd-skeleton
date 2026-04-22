@@ -10,99 +10,131 @@ use Dba\DddSkeleton\Shared\Domain\Criteria\FilterField;
 use Dba\DddSkeleton\Shared\Domain\Criteria\FilterGroup;
 use Dba\DddSkeleton\Shared\Domain\Criteria\FilterOperator;
 use Dba\DddSkeleton\Shared\Domain\Criteria\OrderBy;
-use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteria;
+use Dba\DddSkeleton\Shared\Infrastructure\Persistence\QueryBuilder\Method;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @template TModel of Model
+ */
 final class EloquentCriteriaConverter
 {
-    private $eloquent_criteria;
+    /** @var EloquentCriteria<TModel> */
+    private EloquentCriteria $eloquent_criteria;
 
+    /**
+     * @param array<string, string> $criteriaToEloquentFields
+     * @param array<string, callable> $hydrators
+     */
     public function __construct(
         private readonly Criteria $criteria,
         private readonly array $criteriaToEloquentFields = [],
         private readonly array $hydrators = []
     ) {}
 
+    /**
+     * @param array<string, string> $criteriaToEloquentFields
+     * @param array<string, callable> $hydrators
+     * @return EloquentCriteria<Model>
+     */
     public static function convert(
         Criteria $criteria,
         array $criteriaToEloquentFields = [],
         array $hydrators = []
-    ) {
+    ): EloquentCriteria {
         $converter = new self($criteria, $criteriaToEloquentFields, $hydrators);
 
         return $converter->convertToEloquentCriteria();
     }
 
+    /**
+     * @return EloquentCriteria<TModel>
+     */
     private function convertToEloquentCriteria(): EloquentCriteria
     {
-        $this->eloquent_criteria = EloquentCriteria::create();
+        /** @var EloquentCriteria<TModel> $criteria */
+        $criteria = EloquentCriteria::create();
+        $this->eloquent_criteria = $criteria;
+        
         $this->buildExpression($this->criteria);
         $this->formatOrder($this->criteria);
-        if ($this->criteria->offset())
+        if ($this->criteria->offset()) {
             $this->eloquent_criteria->offset($this->criteria->offset());
-        if ($this->criteria->limit())
+        }
+        if ($this->criteria->limit()) {
             $this->eloquent_criteria->limit($this->criteria->limit());
+        }
+
         return $this->eloquent_criteria;
     }
 
     private function buildExpression(Criteria $criteria): void
     {
-        if (!empty($criteria->filters()->filters())) {
-            array_map($this->buildComparison(), $criteria->filters()->filters());
+        if ($criteria->hasFilters()) {
+            array_map($this->buildComparison(), $criteria->plainFilters());
         }
     }
 
     private function buildComparison(): callable
     {
-        return function ($filter_or_group) {
+        return function (Filter|FilterGroup $filter_or_group): void {
             if ($filter_or_group instanceof FilterGroup) {
-                $glue = strtolower($this->criteria->glue()) === 'or' ? 'orWhere' : 'where';
+                $glue = $this->criteria->glue() === 'or' ? 'orWhere' : 'where';
 
-                $this->eloquent_criteria->{$glue}(function ($query) use ($filter_or_group) {
+                $this->eloquent_criteria->{$glue}(function (mixed $query) use ($filter_or_group): void {
                     foreach ($filter_or_group->filters() as $index => $filter) {
                         $this->applyFilter($query, $filter, $index === 0 ? 'where' : $filter_or_group->glue());
                     }
                 });
             } else {
-                $glue = strtolower($this->criteria->glue()) === 'or' ? 'orWhere' : 'where';
-                $this->applyFilter($this->eloquent_criteria, $filter_or_group, strtolower($this->criteria->glue()));
+                $this->applyFilter($this->eloquent_criteria, $filter_or_group, $this->criteria->glue());
             }
         };
     }
 
-    private function applyFilter($query, Filter $filter, ?string $glue = 'and')
+    private function applyFilter(mixed $query, Filter $filter, ?string $glue = 'and'): void
     {
+        /** @var EloquentBuilder<TModel> $query */
         $glueMethod = $glue === 'or' ? 'orWhere' : 'where';
         $field = $this->mapFieldValue($filter->field());
-        $value = $this->existsHydratorFor($field)
-            ? $this->hydrate($field, $filter->value()->value())
-            : $filter->value()->value();
+
+        $valueRaw = $filter->value()->value();
+        /** @var string $valueString */
+        $valueString = is_scalar($valueRaw) ? (string) $valueRaw : '';
+
+        if ($this->existsHydratorFor($field)) {
+            $hydrated = $this->hydrate($field, $valueString);
+            $value = is_scalar($hydrated) ? (string) $hydrated : '';
+        } else {
+            $value = $valueString;
+        }
 
         if ($filter->operator()->value() === FilterOperator::CONTAINS) {
-            $query->{$glueMethod}($field, 'LIKE', '%' . $value . '%');
+            $query->{$glueMethod}($field, 'LIKE', '%'.$value.'%');
         } elseif ($filter->operator()->value() === FilterOperator::NOT_CONTAINS) {
-            $query->{$glueMethod}($field, 'NOT LIKE', '%' . $value . '%');
+            $query->{$glueMethod}($field, 'NOT LIKE', '%'.$value.'%');
         } elseif ($filter->operator()->value() === FilterOperator::IN) {
-            $query->{$glueMethod . 'In'}($field, explode(',', $value));
+            $query->{$glueMethod.'In'}($field, explode(',', $value));
         } elseif ($filter->operator()->value() === FilterOperator::NOT_IN) {
-            $query->{$glueMethod . 'NotIn'}($field, explode(',', $value));
+            $query->{$glueMethod.'NotIn'}($field, explode(',', $value));
         } elseif ($filter->operator()->value() === FilterOperator::BETWEEN) {
             $values = explode(',', $value);
             if (count($values) === 2) {
-                $query->{$glueMethod . 'Between'}($field, [$values[0], $values[1]]);
+                $query->{$glueMethod.'Between'}($field, [$values[0], $values[1]]);
             } else {
                 throw new \InvalidArgumentException('BETWEEN operator requires two values');
             }
         } elseif ($filter->operator()->value() === FilterOperator::NOT_BETWEEN) {
             $values = explode(',', $value);
             if (count($values) === 2) {
-                $query->{$glueMethod . 'NotBetween'}($field, [$values[0], $values[1]]);
+                $query->{$glueMethod.'NotBetween'}($field, [$values[0], $values[1]]);
             } else {
-                throw new \InvalidArgumentException('NOT_BETWEEN operator requires two values');
+                throw new \InvalidArgumentException('NOT BETWEEN operator requires two values');
             }
         } elseif ($filter->operator()->value() === FilterOperator::STARTS_WITH) {
-            $query->{$glueMethod}($field, 'LIKE', $value . '%');
+            $query->{$glueMethod}($field, 'LIKE', $value.'%');
         } elseif ($filter->operator()->value() === FilterOperator::ENDS_WITH) {
-            $query->{$glueMethod}($field, 'LIKE', '%' . $value);
+            $query->{$glueMethod}($field, 'LIKE', '%'.$value);
         } elseif ($filter->operator()->value() === FilterOperator::GT) {
             $query->{$glueMethod}($field, '>', $value);
         } elseif ($filter->operator()->value() === FilterOperator::LT) {
@@ -111,22 +143,22 @@ final class EloquentCriteriaConverter
             $query->{$glueMethod}($field, '>=', $value);
         } elseif ($filter->operator()->value() === FilterOperator::LTE) {
             $query->{$glueMethod}($field, '<=', $value);
-        } elseif (($filter->operator()->value() === FilterOperator::EQUAL || $filter->operator()->value() === FilterOperator::NOT_EQUAL) && $value == '') {
+        } elseif (($filter->operator()->value() === FilterOperator::EQUAL || $filter->operator()->value() === FilterOperator::NOT_EQUAL) && $value === '') {
             if ($filter->operator()->value() === FilterOperator::EQUAL) {
-                $query->{$glueMethod . 'Null'}($field);
+                $query->{$glueMethod.'Null'}($field);
             } elseif ($filter->operator()->value() === FilterOperator::NOT_EQUAL) {
-                $query->{$glueMethod . 'NotNull'}($field);
+                $query->{$glueMethod.'NotNull'}($field);
             }
         } elseif ($filter->operator()->value() === FilterOperator::IS_NULL) {
-            $query->{$glueMethod . 'Null'}($field);
+            $query->{$glueMethod.'Null'}($field);
         } elseif ($filter->operator()->value() === FilterOperator::IS_NOT_NULL) {
-            $query->{$glueMethod . 'NotNull'}($field);
+            $query->{$glueMethod.'NotNull'}($field);
         } else {
             $query->{$glueMethod}($field, $filter->operator()->value(), $value);
         }
     }
 
-    private function mapFieldValue(FilterField $field)
+    private function mapFieldValue(FilterField $field): string
     {
         return array_key_exists($field->value(), $this->criteriaToEloquentFields)
             ? $this->criteriaToEloquentFields[$field->value()]
@@ -137,36 +169,24 @@ final class EloquentCriteriaConverter
     {
         $order = $criteria->order();
 
-        // Si expose 'orders()', procesamos múltiple
-        if (method_exists($order, 'orders')) {
-            foreach ($order->orders() as $pair) {
-                $field = $this->mapOrderBy($pair['orderBy']);
-                if ($field) {
-                    $this->eloquent_criteria->orderBy($field, $pair['orderType']->value());
-                }
-            }
-            return;
-        }
-
-        /* legacy single-field (por si estás en una versión antigua de Order) */
-        if ($field = $this->mapOrderBy($order->orderBy())) {
-            $this->eloquent_criteria->orderBy($field, $order->orderType()->value());
+        if ($order_by = $this->mapOrderBy($order->orderBy())) {
+            $this->eloquent_criteria->orderBy($order_by, $order->orderType()->value());
         }
     }
 
-    private function mapOrderBy(OrderBy $field)
+    private function mapOrderBy(OrderBy $field): string
     {
         return array_key_exists($field->value(), $this->criteriaToEloquentFields)
             ? $this->criteriaToEloquentFields[$field->value()]
             : $field->value();
     }
 
-    private function existsHydratorFor($field): bool
+    private function existsHydratorFor(string $field): bool
     {
         return array_key_exists($field, $this->hydrators);
     }
 
-    private function hydrate($field, string $value)
+    private function hydrate(string $field, string $value): mixed
     {
         return $this->hydrators[$field]($value);
     }

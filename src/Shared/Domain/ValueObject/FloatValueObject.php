@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Domain\ValueObject;
 
-abstract class FloatValueObject
+/**
+ * @phpstan-consistent-constructor
+ */
+abstract readonly class FloatValueObject
 {
     public function __construct(protected float $value) {}
 

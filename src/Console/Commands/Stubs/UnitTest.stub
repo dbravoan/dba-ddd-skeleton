@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{namespace}}\Tests\Domain;
+
+use {{namespace}}\Domain\{{module}};
+use {{namespace}}\Domain\{{module}}CreatedDomainEvent;
+use {{namespace}}\Domain\{{module}}Id;
+use {{namespace}}\Domain\{{module}}Name;
+use PHPUnit\Framework\TestCase;
+
+final class {{module}}Test extends TestCase
+{
+    /** @test */
+    public function it_should_create_a_{{module_lc}}(): void
+    {
+        $id = {{module}}Id::random();
+        $name = new {{module}}Name('Test Name');
+
+        ${{module_lc}} = {{module}}::create($id, $name);
+
+        $this->assertEquals($id, ${{module_lc}}->id());
+        $this->assertEquals($name, ${{module_lc}}->name());
+        
+        $events = ${{module_lc}}->pullDomainEvents();
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf({{module}}CreatedDomainEvent::class, $events[0]);
+    }
+}

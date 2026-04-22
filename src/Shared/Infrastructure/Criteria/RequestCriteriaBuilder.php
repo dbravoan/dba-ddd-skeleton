@@ -9,200 +9,119 @@ use Dba\DddSkeleton\Shared\Domain\Criteria\Filters;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
 use Dba\DddSkeleton\Shared\Domain\Criteria\OrderBy;
 use Dba\DddSkeleton\Shared\Domain\Criteria\OrderType;
-use Dba\DddSkeleton\Shared\Domain\Security\SqlInjectionProtector;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
 final class RequestCriteriaBuilder
 {
+    /** @var array<int, string> */
     private array $allowedFields = [];
 
-    public function __construct(
-        array $allowedFields = []
-    ) {
+    /** @param array<int, string> $allowedFields */
+    public function __construct(array $allowedFields = [])
+    {
         $this->allowedFields = $allowedFields;
     }
 
-    public function buildFromRequest(Request $request): Criteria
+    public function build(Request $request): Criteria
     {
-        $filters = $request->get('filters', []);
-        $orderBy = $request->get('order_by');
-        $orderType = $request->get('order_type');
-        $limit = $request->get('limit') ? (int) $request->get('limit') : null;
-        $offset = $request->get('offset') ? (int) $request->get('offset') : null;
-        $glue = $request->get('glue', 'AND');
+        /** @var mixed $filtersRaw */
+        $filtersRaw = $request->get('filters', []);
+        $filtersList = is_array($filtersRaw) ? $filtersRaw : [];
 
-        // Sanitizar filters antes de procesarlos
-        $filters = $this->sanitizeFilters(is_array($filters) ? $filters : []);
+        $filters = Filters::fromValues(['groups' => $this->sanitizeFilters($filtersList)]);
         
-        // Validar order_by
-        if ($orderBy) {
-            $this->validateField($orderBy);
-        }
+        $limit = $request->get('limit');
+        $offset = $request->get('offset');
 
-        $criteriaFilters = Filters::fromValues($filters);
+        $orderByRaw = $request->get('order_by');
+        $orderTypeRaw = $request->get('order');
+        $glueRaw = $request->get('glue', 'and');
 
-        if ($orderBy) {
-            $criteriaOrder = new Order(
+        $orderBy = is_string($orderByRaw) ? $orderByRaw : '';
+        $orderType = is_string($orderTypeRaw) ? $orderTypeRaw : OrderType::NONE;
+        $glue = is_string($glueRaw) ? $glueRaw : 'and';
+
+        return new Criteria(
+            $filters,
+            new Order(
                 new OrderBy($orderBy),
-                new OrderType($orderType ?? 'asc')
-            );
-        } else {
-            $criteriaOrder = Order::none();
-        }
-
-        return new Criteria($criteriaFilters, $criteriaOrder, $offset, $limit, $glue);
-    }
-
-    public function withAllowedFields(array $allowedFields): self
-    {
-        $this->allowedFields = $allowedFields;
-        return $this;
-    }
-
-    private function sanitizeFilters(array $filters): array
-    {
-        // Si tiene 'groups', es formato avanzado
-        if (isset($filters['groups'])) {
-            return [
-                'groups' => array_map(
-                    fn (array $group) => $this->sanitizeGroup($group),
-                    $filters['groups']
-                )
-            ];
-        }
-
-        // Formato simple: validar cada filtro
-        return array_map(
-            fn (array $filter) => $this->sanitizeFilter($filter),
-            $filters
+                new OrderType($orderType)
+            ),
+            is_numeric($offset) ? (int) $offset : null,
+            is_numeric($limit) ? (int) $limit : null,
+            $glue
         );
     }
 
+    /** @param array<int, string> $allowedFields */
+    public function withAllowedFields(array $allowedFields): self
+    {
+        $this->allowedFields = $allowedFields;
+
+        return $this;
+    }
+
+    /**
+     * @param array<mixed> $filters
+     * @return array<int, array<string, mixed>>
+     */
+    private function sanitizeFilters(array $filters): array
+    {
+        return array_map(function ($filter) {
+            if (! is_array($filter)) {
+                throw new InvalidArgumentException('Filter must be an array');
+            }
+
+            if (isset($filter['filters']) && is_array($filter['filters'])) {
+                /** @var array<string, mixed> $filter */
+                return $this->sanitizeGroup($filter);
+            }
+
+            /** @var array<string, mixed> $filter */
+            return $this->sanitizeFilter($filter);
+        }, $filters);
+    }
+
+    /**
+     * @param array<string, mixed> $group
+     * @return array<string, mixed>
+     */
     private function sanitizeGroup(array $group): array
     {
-        if (!isset($group['conditions']) || !is_array($group['conditions'])) {
-            throw new InvalidArgumentException('Group must have "conditions" array');
-        }
+        /** @var mixed $filtersRaw */
+        $filtersRaw = $group['filters'] ?? [];
+        $filtersList = is_array($filtersRaw) ? $filtersRaw : [];
 
         return [
-            'glue' => strtolower($group['glue'] ?? 'and'),
-            'conditions' => array_map(
-                fn (array $condition) => $this->sanitizeFilter($condition),
-                $group['conditions']
-            )
+            'filters' => array_map(function (mixed $condition) {
+                if (! is_array($condition)) {
+                    throw new InvalidArgumentException('Filter condition must be an array');
+                }
+
+                /** @var array<string, mixed> $condition */
+                return $this->sanitizeFilter($condition);
+            }, $filtersList),
+            'glue' => is_string($group['glue'] ?? null) ? (string) $group['glue'] : 'and',
         ];
     }
 
+    /**
+     * @param array<string, mixed> $filter
+     * @return array<string, mixed>
+     */
     private function sanitizeFilter(array $filter): array
     {
-        if (!isset($filter['field'])) {
-            throw new InvalidArgumentException('Filter must have "field"');
-        }
+        $field = $filter['field'] ?? '';
+        $this->validateField(is_string($field) ? $field : '');
 
-        if (!isset($filter['operator'])) {
-            throw new InvalidArgumentException('Filter must have "operator"');
-        }
-
-        $field = trim((string) $filter['field']);
-        $operator = strtoupper(trim((string) $filter['operator']));
-        $value = $filter['value'] ?? '';
-
-        $this->validateField($field);
-
-        $this->validateOperator($operator);
-
-        $value = $this->sanitizeValue($operator, $value);
-
-        return [
-            'field' => $field,
-            'operator' => $operator,
-            'value' => $value
-        ];
+        return $filter;
     }
 
     private function validateField(string $field): void
     {
-        SqlInjectionProtector::validateFieldName($field);
-
-        if (!empty($this->allowedFields)) {
-            if (!in_array($field, $this->allowedFields, true)) {
-                throw new InvalidArgumentException(
-                    "Field '{$field}' is not allowed for filtering. Allowed fields: " .
-                    implode(', ', $this->allowedFields)
-                );
-            }
-            return;
+        if (! empty($this->allowedFields) && ! in_array($field, $this->allowedFields)) {
+            throw new InvalidArgumentException(sprintf('The field <%s> is not allowed for filtering', $field));
         }
-
-        $this->validateFieldSyntax($field);
-    }
-
-    private function validateFieldSyntax(string $field): void
-    {
-        // Rechazar patrones peligrosos
-        if (preg_match('/[;\'"`()\\\\]/', $field)) {
-            throw new InvalidArgumentException(
-                "Field '{$field}' contains invalid characters"
-            );
-        }
-
-        // Solo permitir: letras, números, underscore, dot (para joins)
-        if (!preg_match('/^[a-zA-Z0-9_.]+$/', $field)) {
-            throw new InvalidArgumentException(
-                "Field '{$field}' contains invalid characters. Only alphanumeric, underscore and dot allowed"
-            );
-        }
-
-        // Evitar inyecciones de comentarios SQL
-        if (preg_match('/--|#|\/\*/', $field)) {
-            throw new InvalidArgumentException(
-                "Field '{$field}' contains SQL comment characters"
-            );
-        }
-
-        // Evitar keywords SQL en nombres de campos
-        if (preg_match('/\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER)\b/i', $field)) {
-            throw new InvalidArgumentException(
-                "Field '{$field}' contains SQL keywords"
-            );
-        }
-    }
-
-    private function validateOperator(string $operator): void
-    {
-        SqlInjectionProtector::validateOperator($operator);
-    }
-
-    private function sanitizeValue(string $operator, mixed $value): string
-    {
-        $value = SqlInjectionProtector::validateFilterValue((string) $value, $operator);
-
-        // BETWEEN requiere 2 valores
-        if ($operator === 'BETWEEN') {
-            $parts = array_map('trim', explode(',', $value));
-            if (count($parts) !== 2) {
-                throw new InvalidArgumentException(
-                    "BETWEEN operator requires exactly 2 values separated by comma"
-                );
-            }
-            return implode(',', $parts);
-        }
-
-        // IN requiere al menos 1 valor
-        if ($operator === 'IN') {
-            $parts = array_filter(
-                array_map('trim', explode(',', $value)),
-                fn ($v) => !empty($v)
-            );
-            if (empty($parts)) {
-                throw new InvalidArgumentException(
-                    "IN operator requires at least 1 value"
-                );
-            }
-            return implode(',', $parts);
-        }
-
-        return trim($value);
     }
 }

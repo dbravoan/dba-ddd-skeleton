@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use ReflectionClass;
 use RuntimeException;
+
 use function Lambdish\Phunctional\filter;
 
 final class Utils
@@ -19,7 +20,7 @@ final class Utils
             return true;
         }
 
-        return (substr($haystack, -$length) === $needle);
+        return substr($haystack, -$length) === $needle;
     }
 
     public static function dateToString(DateTimeInterface $date): string
@@ -32,25 +33,32 @@ final class Utils
         return new DateTimeImmutable($date);
     }
 
+    /**
+     * @param array<mixed> $values
+     */
     public static function jsonEncode(array $values): string
     {
         return json_encode($values, JSON_THROW_ON_ERROR);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function jsonDecode(string $json): array
     {
         $data = json_decode($json, true);
 
-        if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($data)) {
+            throw new RuntimeException('Unable to parse response body into JSON: '.json_last_error());
         }
 
+        /** @var array<string, mixed> $data */
         return $data;
     }
 
     public static function toSnakeCase(string $text): string
     {
-        return ctype_lower($text) ? $text : strtolower((string) preg_replace('/([^A-Z\s])([A-Z])/', "$1_$2", $text));
+        return ctype_lower($text) ? $text : strtolower((string) preg_replace('/([^A-Z\s])([A-Z])/', '$1_$2', $text));
     }
 
     public static function toCamelCase(string $text): string
@@ -58,24 +66,31 @@ final class Utils
         return lcfirst(str_replace('_', '', ucwords($text, '_')));
     }
 
+    /**
+     * @param array<mixed> $array
+     * @return array<string, mixed>
+     */
     public static function dot(array $array, string $prepend = ''): array
     {
         $results = [];
         foreach ($array as $key => $value) {
-            if (is_array($value) && !empty($value)) {
-                $results = array_merge($results, static::dot($value, $prepend . $key . '.'));
+            if (is_array($value) && ! empty($value)) {
+                $results = array_merge($results, self::dot($value, $prepend.$key.'.'));
             } else {
-                $results[$prepend . $key] = $value;
+                $results[$prepend.(string) $key] = $value;
             }
         }
 
         return $results;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public static function filesIn(string $path, string $fileType): array
     {
         return filter(
-            static fn(string $possibleModule) => strstr($possibleModule, $fileType),
+            static fn (string $possibleModule) => strstr($possibleModule, $fileType),
             scandir($path)
         );
     }
@@ -87,6 +102,10 @@ final class Utils
         return $reflect->getShortName();
     }
 
+    /**
+     * @param iterable<mixed> $iterable
+     * @return array<mixed>
+     */
     public static function iterableToArray(iterable $iterable): array
     {
         if (is_array($iterable)) {

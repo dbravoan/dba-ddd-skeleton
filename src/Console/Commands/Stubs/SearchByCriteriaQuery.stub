@@ -6,14 +6,14 @@ namespace {{namespace}}\Application\SearchByCriteria;
 
 use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
 
-final class Search{{module}}sByCriteriaQuery implements Query
+final readonly class Search{{module}}sByCriteriaQuery implements Query
 {
     public function __construct(
-        private readonly array $filters,
-        private readonly ?string $orderBy,
-        private readonly ?string $orderType,
-        private readonly ?int $limit,
-        private readonly ?int $offset
+        private array $filters,
+        private ?string $orderBy,
+        private ?string $orderType,
+        private ?int $limit,
+        private ?int $offset
     ) {}
 
     public function filters(): array

@@ -4,22 +4,20 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Infrastructure\Laravel;
 
+use Dba\DddSkeleton\Shared\Domain\BadRequestDomainError;
+use Dba\DddSkeleton\Shared\Domain\NotFoundDomainError;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\JsonResponse;
+use InvalidArgumentException;
+use Illuminate\Routing\Controller as BaseController;
 
 abstract class ApiController extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    /**
-     * success response method.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function sendResponse($result, $message): JsonResponse
+    public function sendResponse(mixed $result, string $message): JsonResponse
     {
         $response = [
             'success' => true,
@@ -27,35 +25,44 @@ abstract class ApiController extends BaseController
             'message' => $message,
         ];
 
-        return new JsonResponse(
-            $response,
-            200,
-            ['Access-Control-Allow-Origin' => '*']
-        );
+        return new JsonResponse($response, 200);
     }
 
-
     /**
-     * return error response.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @param array<string, mixed> $errorMessages
      */
-    public function sendError($error, $errorMessages = [], $code = 404): JsonResponse
+    public function sendError(string $error, array $errorMessages = [], int $code = 404): JsonResponse
     {
         $response = [
             'success' => false,
             'message' => $error,
         ];
 
-        if (!empty($errorMessages)) {
+        if (! empty($errorMessages)) {
             $response['data'] = $errorMessages;
         }
 
         return new JsonResponse($response, $code);
     }
 
+    /**
+     * @template T of object
+     * @param class-string<T> $class
+     * @param mixed $value
+     * @return T|null
+     */
     public function getValueObject(string $class, mixed $value): ?object
     {
         return empty($value) ? null : new $class($value);
+    }
+
+    /** @return array<class-string, int> */
+    protected function exceptionHandler(): array
+    {
+        return [
+            NotFoundDomainError::class   => 404,
+            InvalidArgumentException::class => 422,
+            BadRequestDomainError::class => 400,
+        ];
     }
 }

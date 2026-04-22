@@ -6,9 +6,9 @@ namespace {{namespace}}\Application\Delete;
 
 use Dba\DddSkeleton\Shared\Domain\Bus\Command\Command;
 
-final class Delete{{module}}Command implements Command
+final readonly class Delete{{module}}Command implements Command
 {
-    public function __construct(private readonly string $id) {}
+    public function __construct(private string $id) {}
 
     public function id(): string
     {

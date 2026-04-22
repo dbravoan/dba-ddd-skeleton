@@ -8,8 +8,10 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Event\DomainEvent;
 
 abstract class AggregateRoot
 {
+    /** @var DomainEvent[] */
     private array $domainEvents = [];
 
+    /** @return DomainEvent[] */
     final public function pullDomainEvents(): array
     {
         $domainEvents       = $this->domainEvents;
@@ -23,8 +25,9 @@ abstract class AggregateRoot
         $this->domainEvents[] = $domainEvent;
     }
 
-    final protected static function createNullableValueObject(string $className, $value): ?object
+    protected function createNullableValueObject(string $class, mixed $value): ?object
     {
-        return empty($value) ? null : new $className($value);
+        return empty($value) ? null : new $class($value);
     }
 }
+

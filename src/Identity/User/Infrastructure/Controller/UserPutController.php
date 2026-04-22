@@ -12,14 +12,17 @@ use Illuminate\Http\Request;
 
 final class UserPutController extends ApiController
 {
-    public function __construct(private readonly CommandBus $bus) {}
+    public function __construct(private CommandBus $bus) {}
 
     public function __invoke(string $id, Request $request): JsonResponse
     {
+        $name = $request->input('name');
+        $email = $request->input('email');
+
         $command = new UpdateUserCommand(
             $id,
-            $request->input('name'),
-            $request->input('email')
+            is_string($name) ? $name : '',
+            is_string($email) ? $email : ''
         );
 
         $this->bus->dispatch($command);

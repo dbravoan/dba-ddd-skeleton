@@ -6,11 +6,11 @@ namespace {{namespace}}\Application\Update;
 
 use Dba\DddSkeleton\Shared\Domain\Bus\Command\Command;
 
-final class Update{{module}}Command implements Command
+final readonly class Update{{module}}Command implements Command
 {
     public function __construct(
-        private readonly string $id,
-        private readonly ?string $name
+        private string $id,
+        private ?string $name
     ) {}
 
     public function id(): string

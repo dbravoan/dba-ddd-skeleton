@@ -14,9 +14,8 @@ final readonly class DeleteUserCommandHandler implements CommandHandler
 
     public function __invoke(DeleteUserCommand $command): void
     {
-        $userId = new UserId($command->id);
-        
-        // El repositorio se encarga de la lógica de borrado (Infrastructure)
-        $this->repository->remove($userId);
+        $userId = new UserId($command->id());
+
+        $this->repository->delete($userId);
     }
 }

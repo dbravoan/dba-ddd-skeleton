@@ -12,19 +12,19 @@ final class SqlInjectionProtector
     private const DANGEROUS_PATTERNS = [
         // Comentarios SQL
         '/(--|\#|\/\*|\*\/)/',
-        
+
         // UNION-based injection
         '/\bUNION\b/i',
-        
+
         // Stacked queries
         '/;/',
-        
+
         // Boolean-based blind injection
         '/\b(AND|OR)\b\s*1\s*=\s*1/i',
-        
+
         // Time-based blind injection
         '/\b(SLEEP|BENCHMARK|WAITFOR)\b/i',
-        
+
         // Error-based injection
         '/\b(EXTRACTVALUE|UPDATEXML|JSON_EXTRACT)\b/i',
     ];
@@ -32,7 +32,7 @@ final class SqlInjectionProtector
     private const DANGEROUS_KEYWORDS = [
         'UNION', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP',
         'CREATE', 'ALTER', 'EXEC', 'EXECUTE', 'SCRIPT', 'JAVASCRIPT',
-        'ONLOAD', 'ONERROR', 'SLEEP', 'BENCHMARK', 'WAITFOR'
+        'ONLOAD', 'ONERROR', 'SLEEP', 'BENCHMARK', 'WAITFOR',
     ];
 
     /**
@@ -43,7 +43,7 @@ final class SqlInjectionProtector
         $field = trim($field);
 
         // No permitir caracteres especiales
-        if (!preg_match('/^[a-zA-Z0-9_.]+$/', $field)) {
+        if (! preg_match('/^[a-zA-Z0-9_.]+$/', $field)) {
             throw new InvalidArgumentException(
                 "Field name '{$field}' contains invalid characters"
             );
@@ -81,6 +81,7 @@ final class SqlInjectionProtector
             foreach ($values as $v) {
                 self::validateSingleValue($v);
             }
+
             return implode(',', $values);
         }
 
@@ -88,12 +89,13 @@ final class SqlInjectionProtector
             $values = array_map('trim', explode(',', $value));
             if (count($values) !== 2) {
                 throw new InvalidArgumentException(
-                    "BETWEEN requires exactly 2 comma-separated values"
+                    'BETWEEN requires exactly 2 comma-separated values'
                 );
             }
             foreach ($values as $v) {
                 self::validateSingleValue($v);
             }
+
             return implode(',', $values);
         }
 
@@ -111,7 +113,7 @@ final class SqlInjectionProtector
         foreach (self::DANGEROUS_PATTERNS as $pattern) {
             if (preg_match($pattern, $value)) {
                 throw new InvalidArgumentException(
-                    "Filter value contains potential SQL injection pattern"
+                    'Filter value contains potential SQL injection pattern'
                 );
             }
         }
@@ -128,10 +130,10 @@ final class SqlInjectionProtector
             '=', '!=', '>', '<', '>=', '<=',
             'CONTAINS', 'NOT_CONTAINS', 'STARTS_WITH', 'ENDS_WITH',
             'IN', 'NOT IN', 'BETWEEN', 'NOT_BETWEEN',
-            'IS_NULL', 'IS_NOT_NULL', 'LIKE'
+            'IS_NULL', 'IS_NOT_NULL', 'LIKE',
         ];
 
-        if (!in_array(strtoupper($operator), $validOperators, true)) {
+        if (! in_array(strtoupper($operator), $validOperators, true)) {
             throw new InvalidArgumentException(
                 "Invalid operator: {$operator}"
             );

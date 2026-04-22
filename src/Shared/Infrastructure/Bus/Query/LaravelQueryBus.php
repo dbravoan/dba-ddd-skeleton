@@ -8,26 +8,36 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
 use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryBus;
 use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
 use ReflectionClass;
+use ReflectionNamedType;
 
 final class LaravelQueryBus implements QueryBus
 {
+    /** @var array<string, callable> */
     private array $mappedHandlers = [];
 
+    /**
+     * @param iterable<callable> $queryHandlers
+     */
     public function __construct(iterable $queryHandlers)
     {
         $this->mapHandlers($queryHandlers);
     }
 
+    /**
+     * @param iterable<callable> $handlers
+     */
     private function mapHandlers(iterable $handlers): void
     {
         foreach ($handlers as $handler) {
+            /** @var object $handler */
             $reflector = new ReflectionClass($handler);
             $method = $reflector->getMethod('__invoke');
-            
+
             if ($method->getNumberOfParameters() === 1) {
-                $paramType = $method->getParameters()[0]->getType()?->getName();
-                if ($paramType) {
-                    $this->mappedHandlers[$paramType] = $handler;
+                $type = $method->getParameters()[0]->getType();
+                if ($type instanceof ReflectionNamedType) {
+                    /** @var callable $handler */
+                    $this->mappedHandlers[$type->getName()] = $handler;
                 }
             }
         }
@@ -36,8 +46,8 @@ final class LaravelQueryBus implements QueryBus
     public function ask(Query $query): ?Response
     {
         $handler = $this->mappedHandlers[$query::class] ?? null;
-        
-        if (!$handler) {
+
+        if (! $handler) {
             throw new QueryNotRegisteredError($query);
         }
 

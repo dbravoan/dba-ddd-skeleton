@@ -6,6 +6,6 @@ namespace {{namespace}}\Domain;
 
 use Dba\DddSkeleton\Shared\Domain\ValueObject\StringValueObject;
 
-final class {{module}}{{Type}} extends StringValueObject
+final readonly class {{module}}{{Type}} extends StringValueObject
 {
 }

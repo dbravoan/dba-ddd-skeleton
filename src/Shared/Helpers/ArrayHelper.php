@@ -4,28 +4,20 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Helpers;
 
-class ArrayHelper
+final class ArrayHelper
 {
-
     /**
-     * Formatea todos los valores numéricos con decimales a dos decimales en un array.
-     *
-     * @param array $array
-     * @return void
+     * @param array<string, mixed> $array
+     * @return array<string, mixed>
      */
-    public static function formatDecimals(&$array)
+    public static function formatDecimals(array $array, int $decimals = 2): array
     {
-        foreach ($array as $key => &$value) {
-            if (is_array($value)) {
-                self::formatDecimals($value);
-            } else {
-                if (is_numeric($value)) {
-                    $stringValue = (string) $value;
-                    if (strpos($stringValue, '.') !== false) {
-                        $value = number_format((float)$value, 2, '.', '');
-                    }
-                }
+        foreach ($array as $key => $value) {
+            if (is_numeric($value)) {
+                $array[$key] = number_format((float) $value, $decimals, '.', '');
             }
         }
+
+        return $array;
     }
 }

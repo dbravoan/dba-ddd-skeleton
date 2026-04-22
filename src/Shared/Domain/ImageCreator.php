@@ -6,6 +6,7 @@ namespace Dba\DddSkeleton\Shared\Domain;
 
 interface ImageCreator
 {
-    public function canvas($width, $height, $color);
-    public function make($img);
+    public function canvas(int $width, int $height, string $color): void;
+
+    public function make(mixed $img): void;
 }

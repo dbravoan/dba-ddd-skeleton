@@ -6,7 +6,9 @@ namespace Dba\DddSkeleton\Shared\Domain;
 
 interface BarcodeGenerator
 {
-    public function barcodePng($code, $type, $file, $scale, $height, $rotate, $color);
-    public function datamatrixPng($code, $file, $size, $margin, $color);
-    public function qrcodePng($code, $emblem, $file, $level, $size, $margin, $color);
+    public function barcodePng(string $code, string $type, string $file, int|float $scale, int|float $height, int|float $rotate, string $color): void;
+
+    public function datamatrixPng(string $code, string $file, int|float $size, int|float $margin, string $color): void;
+
+    public function qrcodePng(string $code, ?string $emblem, string $file, string $level, int|float $size, int|float $margin, string $color): void;
 }

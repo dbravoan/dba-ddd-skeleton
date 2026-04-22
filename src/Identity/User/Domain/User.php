@@ -17,17 +17,23 @@ final class User extends AggregateRoot
     public static function create(UserId $id, UserEmail $email, string $name): self
     {
         $user = new self($id, $email, $name);
+
         $user->record(new UserCreatedDomainEvent($id->value(), $email->value(), $name));
 
         return $user;
     }
 
+    /** @param array<string, mixed> $primitives */
     public static function fromPrimitives(array $primitives): self
     {
+        $id = $primitives['id'] ?? '';
+        $email = $primitives['email'] ?? '';
+        $name = $primitives['name'] ?? '';
+
         return new self(
-            new UserId($primitives['id']),
-            new UserEmail($primitives['email']),
-            $primitives['name']
+            new UserId(is_string($id) ? $id : ''),
+            new UserEmail(is_string($email) ? $email : ''),
+            is_string($name) ? $name : ''
         );
     }
 
@@ -46,12 +52,13 @@ final class User extends AggregateRoot
         return $this->name;
     }
 
+    /** @return array{id: string, email: string, name: string} */
     public function toPrimitives(): array
     {
         return [
-            'id'    => $this->id->value(),
+            'id' => $this->id->value(),
             'email' => $this->email->value(),
-            'name'  => $this->name,
+            'name' => $this->name,
         ];
     }
 

@@ -44,6 +44,14 @@ final class Criteria
         return $this->filters->count() > 0;
     }
 
+    public function hasOrder(): bool
+    {
+        return ! $this->order->isNone();
+    }
+
+    /**
+     * @return array<int, Filter|FilterGroup>
+     */
     public function plainFilters(): array
     {
         return $this->filters->filters();

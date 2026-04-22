@@ -8,7 +8,10 @@ use InvalidArgumentException;
 use Ramsey\Uuid\Uuid as RamseyUuid;
 use Stringable;
 
-class Uuid implements Stringable
+/**
+ * @phpstan-consistent-constructor
+ */
+readonly class Uuid implements Stringable
 {
     public function __construct(protected string $value)
     {
@@ -37,7 +40,7 @@ class Uuid implements Stringable
 
     private function ensureIsValidUuid(string $id): void
     {
-        if (!RamseyUuid::isValid($id)) {
+        if (! RamseyUuid::isValid($id)) {
             throw new InvalidArgumentException(sprintf('<%s> does not allow the value <%s>.', static::class, $id));
         }
     }

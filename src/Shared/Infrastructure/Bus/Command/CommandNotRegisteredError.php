@@ -13,6 +13,11 @@ final class CommandNotRegisteredError extends RuntimeException
     {
         $commandClass = $command::class;
 
-        parent::__construct("The command <$commandClass> hasn't a command handler associated");
+        parent::__construct(sprintf(
+            "The command <%s> does not have a command handler associated. ".
+            "Make sure you have registered the handler in your ServiceProvider and tagged it (if using automatic registration) ".
+            "or passed it to the LaravelCommandBus constructor.",
+            $commandClass
+        ));
     }
 }

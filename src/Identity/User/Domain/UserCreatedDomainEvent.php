@@ -6,31 +6,16 @@ namespace Dba\DddSkeleton\Identity\User\Domain;
 
 use Dba\DddSkeleton\Shared\Domain\Bus\Event\DomainEvent;
 
-final class UserCreatedDomainEvent extends DomainEvent
+final readonly class UserCreatedDomainEvent extends DomainEvent
 {
     public function __construct(
-        string $aggregateId,
-        private readonly string $email,
-        private readonly string $name,
-        string $eventId = null,
-        string $occurredOn = null
+        string $id,
+        private string $email,
+        private string $name,
+        ?string $eventId = null,
+        ?string $occurredOn = null
     ) {
-        parent::__construct($aggregateId, $eventId, $occurredOn);
-    }
-
-    public static function fromPrimitives(
-        string $aggregateId,
-        array $body,
-        string $eventId,
-        string $occurredOn
-    ): self {
-        return new self(
-            $aggregateId,
-            $body['email'],
-            $body['name'],
-            $eventId,
-            $occurredOn
-        );
+        parent::__construct($id, $eventId, $occurredOn);
     }
 
     public static function eventName(): string
@@ -38,11 +23,31 @@ final class UserCreatedDomainEvent extends DomainEvent
         return 'user.created';
     }
 
+    /** @param array<string, mixed> $body */
+    public static function fromPrimitives(
+        string $aggregateId,
+        array $body,
+        string $eventId,
+        string $occurredOn
+    ): self {
+        $email = $body['email'] ?? '';
+        $name = $body['name'] ?? '';
+
+        return new self(
+            $aggregateId,
+            is_string($email) ? $email : '',
+            is_string($name) ? $name : '',
+            $eventId,
+            $occurredOn
+        );
+    }
+
+    /** @return array{email: string, name: string} */
     public function toPrimitives(): array
     {
         return [
             'email' => $this->email,
-            'name'  => $this->name,
+            'name' => $this->name,
         ];
     }
 

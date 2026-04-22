@@ -8,16 +8,13 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
 
 final readonly class UsersResponse implements Response
 {
-    /** @var UserResponse[] */
-    private array $users;
-
-    public function __construct(UserResponse ...$users)
-    {
-        $this->users = $users;
-    }
+    /**
+     * @param array<int, UserResponse> $users
+     */
+    public function __construct(private array $users) {}
 
     /**
-     * @return UserResponse[]
+     * @return array<int, UserResponse>
      */
     public function users(): array
     {
@@ -25,13 +22,12 @@ final readonly class UsersResponse implements Response
     }
 
     /**
-     * Transforms the collection into a plain array for 
-     * infrastructure delivery (Inertia/API).
+     * @return array<int, array{id: string, name: string, email: string}>
      */
     public function toArray(): array
     {
         return array_map(
-            fn (UserResponse $response) => $response->toArray(), 
+            fn (UserResponse $response) => $response->toArray(),
             $this->users
         );
     }

@@ -12,31 +12,22 @@ use Illuminate\Http\Request;
 
 final class UserPostController extends ApiController
 {
-    public function __construct(
-        private readonly CommandBus $bus
-    ) {}
+    public function __construct(private CommandBus $bus) {}
 
     public function __invoke(Request $request): JsonResponse
     {
-        // 1. Validar la request (opcionalmente usar un FormRequest)
-        $request->validate([
-            'id'    => 'required|uuid',
-            'name'  => 'required|string',
-            'email' => 'required|email',
-        ]);
+        $id = $request->input('id');
+        $name = $request->input('name');
+        $email = $request->input('email');
 
-        // 2. Crear el comando con los datos de la petición
         $command = new CreateUserCommand(
-            $request->input('id'),
-            $request->input('name'),
-            $request->input('email')
+            is_string($id) ? $id : '',
+            is_string($name) ? $name : '',
+            is_string($email) ? $email : ''
         );
 
-        // 3. Despachar al Bus de Comandos
-        // El bus localizará el CreateUserCommandHandler automáticamente
         $this->bus->dispatch($command);
 
-        // 4. Devolver respuesta de éxito usando el helper del skeleton
         return $this->sendResponse(null, 'User created successfully');
     }
 }

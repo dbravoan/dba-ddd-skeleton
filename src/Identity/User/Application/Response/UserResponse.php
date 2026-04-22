@@ -24,11 +24,12 @@ final readonly class UserResponse implements Response
         );
     }
 
+    /** @return array{id: string, name: string, email: string} */
     public function toArray(): array
     {
         return [
-            'id'    => $this->id,
-            'name'  => $this->name,
+            'id' => $this->id,
+            'name' => $this->name,
             'email' => $this->email,
         ];
     }

@@ -10,9 +10,12 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Event\EventBus;
 
 final class LaravelEventBus implements EventBus
 {
-    /** @var array<string, DomainEventSubscriber[]> */
+    /** @var array<string, array<int, DomainEventSubscriber>> */
     private array $subscribersByEvent = [];
 
+    /**
+     * @param iterable<DomainEventSubscriber> $subscribers
+     */
     public function __construct(iterable $subscribers)
     {
         $this->mapSubscribers($subscribers);
@@ -24,18 +27,18 @@ final class LaravelEventBus implements EventBus
             $subscribers = $this->subscribersByEvent[$event::class] ?? [];
 
             foreach ($subscribers as $subscriber) {
+                /** @var callable $subscriber */
                 $subscriber($event);
             }
         }
     }
 
+    /**
+     * @param iterable<DomainEventSubscriber> $subscribers
+     */
     private function mapSubscribers(iterable $subscribers): void
     {
         foreach ($subscribers as $subscriber) {
-            if (!$subscriber instanceof DomainEventSubscriber) {
-                continue;
-            }
-
             foreach ($subscriber::subscribedTo() as $eventClass) {
                 $this->subscribersByEvent[$eventClass][] = $subscriber;
             }

@@ -14,28 +14,29 @@ use ReflectionMethod;
 
 /**
  * @mixin QueryBuilder
+ * @phpstan-consistent-constructor
  */
 class QueryBuilderCriteria
 {
-
-    protected $proxies = [
+    /** @var array<int, class-string> */
+    protected array $proxies = [
         QueryBuilder::class,
     ];
+
     /**
-     * $methods.
-     *
      * @var Method[]
      */
-    protected $methods = [];
+    protected array $methods = [];
 
-    private static $cache = [];
+    /** @var array<string, array<string, int>> */
+    private static array $cache = [];
 
     /**
      * Handle dynamic method calls into the method.
      *
-     * @param string $method
-     * @param array $parameters
-     * @return Criteria
+     * @param  string  $method
+     * @param  array<mixed>  $parameters
+     * @return $this
      *
      * @throws BadMethodCallException
      * @throws ReflectionException
@@ -50,7 +51,9 @@ class QueryBuilderCriteria
         }
 
         if (Str::startsWith($method, 'where')) {
-            return $this->dynamicWhere($method, $parameters);
+            $this->methods[] = new Method($method, $parameters);
+
+            return $this;
         }
 
         $className = static::class;
@@ -63,7 +66,7 @@ class QueryBuilderCriteria
      *
      * @return static
      */
-    public static function create()
+    public static function create(): static
     {
         return new static();
     }
@@ -71,30 +74,27 @@ class QueryBuilderCriteria
     /**
      * alias raw.
      *
-     * @param mixed $value
+     * @param  float|int|string|\Stringable  $value
      * @return Expression
      */
-    public static function expr($value)
+    public static function expr(float|int|string|\Stringable $value): Expression
     {
         return static::raw($value);
     }
 
     /**
-     * @param mixed $value
+     * @param  float|int|string|\Stringable  $value
      * @return Expression
      */
-    public static function raw($value)
+    public static function raw(float|int|string|\Stringable $value): Expression
     {
         return new Expression($value);
     }
 
     /**
      * each.
-     *
-     * @param Closure $callback
-     * @return void
      */
-    public function each(Closure $callback)
+    public function each(Closure $callback): void
     {
         foreach ($this->methods as $method) {
             $callback($method);
@@ -104,14 +104,15 @@ class QueryBuilderCriteria
     /**
      * toArray.
      *
-     * @return array
+     * @return array<int, array{method: string, parameters: array<mixed>}>
      */
-    public function toArray()
+    public function toArray(): array
     {
         return array_map(static function ($method) {
+            /** @var Method $method */
             return [
                 'method' => $method->name,
-                'parameters' => $method->parameters,
+                'parameters' => (array) $method->parameters,
             ];
         }, $this->methods);
     }
@@ -119,37 +120,46 @@ class QueryBuilderCriteria
     /**
      * Begin querying the model on the write connection.
      *
-     * @return Criteria
+     * @return $this
      */
-    public function onWriteConnection()
+    public function onWriteConnection(): self
     {
-        return $this->useWritePdo();
+        /** @var callable $callable */
+        $callable = [$this, 'useWritePdo'];
+        $callable();
+
+        return $this;
     }
 
     /**
-     * @param string $class
-     * @return string[]
+     * @param  class-string|object  $class
+     * @return array<string, int>
+     *
      * @throws ReflectionException
      */
-    private function findMethods($class)
+    private function findMethods(string|object $class): array
     {
-        if (array_key_exists($class, self::$cache)) {
-            return self::$cache[$class];
+        $cacheKey = is_object($class) ? $class::class : $class;
+        if (array_key_exists($cacheKey, self::$cache)) {
+            return self::$cache[$cacheKey];
         }
 
         $ref = new ReflectionClass($class);
 
-        return self::$cache[$class] = array_flip(array_map(static function ($method) {
+        /** @var array<string, int> $methods */
+        $methods = array_flip(array_map(static function (ReflectionMethod $method) {
             return $method->getName();
         }, $ref->getMethods(ReflectionMethod::IS_PUBLIC)));
+
+        return self::$cache[$cacheKey] = $methods;
     }
 
     /**
-     * @param string $method
      * @return bool
+     *
      * @throws ReflectionException
      */
-    private function hasMethod(string $method)
+    private function hasMethod(string $method): bool
     {
         foreach ($this->proxies as $proxy) {
             $methods = $this->findMethods($proxy);

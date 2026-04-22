@@ -8,6 +8,10 @@ use InvalidArgumentException;
 
 final class Assert
 {
+    /**
+     * @param array<int, string> $classes
+     * @param array<int, mixed> $items
+     */
     public static function arrayOf(array $classes, array $items): void
     {
         foreach ($items as $item) {
@@ -15,8 +19,10 @@ final class Assert
         }
     }
 
-    // Modificamos este método para aceptar un array de clases
-    public static function instanceOf(array $classes, $item): void
+    /**
+     * @param array<int, string> $classes
+     */
+    public static function instanceOf(array $classes, mixed $item): void
     {
         $is_instance = false;
 
@@ -28,11 +34,11 @@ final class Assert
         }
 
         // Si no es instancia de ninguno de los tipos permitidos, lanzamos una excepción
-        if (!$is_instance) {
+        if (! $is_instance) {
             throw new InvalidArgumentException(
                 sprintf(
                     'The object <%s> is not an instance of any of the allowed types: [%s]',
-                    $item::class,
+                    is_object($item) ? $item::class : gettype($item),
                     implode(', ', $classes)
                 )
             );

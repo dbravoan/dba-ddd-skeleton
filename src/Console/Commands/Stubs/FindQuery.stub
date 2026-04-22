@@ -6,9 +6,9 @@ namespace {{namespace}}\Application\Find;
 
 use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
 
-final class Find{{module}}Query implements Query
+final readonly class Find{{module}}Query implements Query
 {
-    public function __construct(private readonly string $id) {}
+    public function __construct(private string $id) {}
 
     public function id(): string
     {

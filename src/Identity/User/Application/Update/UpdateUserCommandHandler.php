@@ -19,7 +19,7 @@ final readonly class UpdateUserCommandHandler implements CommandHandler
         $userId = new UserId($command->id);
         $user = $this->repository->search($userId);
 
-        if (null === $user) {
+        if ($user === null) {
             throw new InvalidArgumentException(sprintf('User <%s> does not exist', $command->id));
         }
 
