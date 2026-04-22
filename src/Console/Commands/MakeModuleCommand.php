@@ -121,19 +121,19 @@ final class MakeModuleCommand extends Command
 
         // Controllers
         if (! $this->option('no-creator')) {
-            $this->createFile("$basePath/Infrastructure/Controller/{$module}PostController.php", $this->getStub('CreateController', $context, $module));
+            $this->createFile("$basePath/Infrastructure/Controller/Create{$module}Controller.php", $this->getStub('CreateController', $context, $module));
         }
         if (! $this->option('no-finder')) {
-            $this->createFile("$basePath/Infrastructure/Controller/{$module}GetController.php", $this->getStub('FindController', $context, $module));
+            $this->createFile("$basePath/Infrastructure/Controller/Find{$module}Controller.php", $this->getStub('FindController', $context, $module));
         }
         if (! $this->option('no-updater')) {
-            $this->createFile("$basePath/Infrastructure/Controller/{$module}PutController.php", $this->getStub('UpdateController', $context, $module));
+            $this->createFile("$basePath/Infrastructure/Controller/Update{$module}Controller.php", $this->getStub('UpdateController', $context, $module));
         }
         if (! $this->option('no-searcher')) {
-            $this->createFile("$basePath/Infrastructure/Controller/{$module}sGetController.php", $this->getStub('SearchByCriteriaController', $context, $module));
+            $this->createFile("$basePath/Infrastructure/Controller/Search{$module}sByCriteriaController.php", $this->getStub('SearchByCriteriaController', $context, $module));
         }
 
-        $this->createFile("$basePath/Infrastructure/Controller/{$module}DeleteController.php", $this->getStub('DeleteController', $context, $module));
+        $this->createFile("$basePath/Infrastructure/Controller/Delete{$module}Controller.php", $this->getStub('DeleteController', $context, $module));
     }
 
     private function createTests(string $context, string $module, string $basePath): void

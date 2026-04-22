@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Domain;
 
-use Dba\DddSkeleton\Shared\Domain\ValueObject\StringValueObject;
+use Dba\DddSkeleton\Shared\Domain\ValueObject\{{type}};
 
-final readonly class {{module}}{{Type}} extends StringValueObject
+final readonly class {{name}} extends {{type}}
 {
 }

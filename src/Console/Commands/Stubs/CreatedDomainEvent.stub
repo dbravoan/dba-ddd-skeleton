@@ -6,7 +6,7 @@ namespace {{namespace}}\Domain;
 
 use Dba\DddSkeleton\Shared\Domain\Bus\Event\DomainEvent;
 
-final class {{module}}CreatedDomainEvent extends DomainEvent
+final readonly class {{module}}CreatedDomainEvent extends DomainEvent
 {
     public function __construct(
         string $aggregateId,
