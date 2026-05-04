@@ -16,11 +16,12 @@ final class MakeModuleCommand extends Command
                             {--no-creator : Skip generating Creator classes}
                             {--no-updater : Skip generating Updater classes}
                             {--no-searcher : Skip generating Searcher classes}
+                            {--no-deleter : Skip generating Deleter classes}
                             {--application-service : Generate Application Service instead of putting logic in Handler}';
 
     protected $description = 'Create a new DDD Module structure';
 
-    public function handle(): void
+    public function handle(): int
     {
         $contextArg = $this->argument('context');
         $moduleArg = $this->argument('module');
@@ -28,35 +29,38 @@ final class MakeModuleCommand extends Command
         $context = Str::studly(is_string($contextArg) ? $contextArg : '');
         $module = Str::studly(is_string($moduleArg) ? $moduleArg : '');
 
-        $basePath = "src/{$context}/{$module}";
+        $basePath = base_path("src/{$context}/{$module}");
+        $testBasePath = base_path("tests/{$context}/{$module}");
 
         if (File::exists($basePath)) {
             $this->error("Module {$module} already exists in {$context}!");
 
-            return;
+            return self::FAILURE;
         }
 
-        $this->createDirectories($basePath);
+        $this->createDirectories($basePath, $testBasePath);
         $this->createDomainClasses($context, $module, $basePath);
         $this->createApplicationClasses($context, $module, $basePath);
         $this->createInfrastructureClasses($context, $module, $basePath);
-        $this->createTests($context, $module, $basePath);
+        $this->createTests($context, $module, $testBasePath);
 
         $this->info("Module {$module} created successfully in {$context}.");
 
         $this->comment('Remember to register your Repository in your ServiceProvider:');
         $this->comment("    \$this->app->bind(\\\\{$context}\\\\{$module}\\\\Domain\\\\{$module}Repository::class, \\\\{$context}\\\\{$module}\\\\Infrastructure\\\\Persistence\\\\Eloquent{$module}Repository::class);");
+
+        return self::SUCCESS;
     }
 
-    private function createDirectories(string $basePath): void
+    private function createDirectories(string $basePath, string $testBasePath): void
     {
         $directories = [
             "$basePath/Application",
             "$basePath/Domain",
             "$basePath/Infrastructure/Persistence",
             "$basePath/Infrastructure/Controller",
-            "$basePath/Tests/Domain",
-            "$basePath/Tests/Application",
+            "$testBasePath/Domain",
+            "$testBasePath/Application",
         ];
 
         foreach ($directories as $dir) {
@@ -111,6 +115,9 @@ final class MakeModuleCommand extends Command
             File::makeDirectory("$basePath/Application/SearchByCriteria", 0755, true);
             $this->createFile("$basePath/Application/SearchByCriteria/Search{$module}sByCriteriaQuery.php", $this->getStub('SearchByCriteriaQuery', $context, $module));
             $this->createFile("$basePath/Application/SearchByCriteria/Search{$module}sByCriteriaQueryHandler.php", $this->getStub('SearchByCriteriaQueryHandler', $context, $module));
+            $this->createFile("$basePath/Application/SearchByCriteria/Count{$module}sByCriteriaQuery.php", $this->getStub('CountByCriteriaQuery', $context, $module));
+            $this->createFile("$basePath/Application/SearchByCriteria/Count{$module}sByCriteriaQueryHandler.php", $this->getStub('CountByCriteriaQueryHandler', $context, $module));
+            $this->createFile("$basePath/Application/SearchByCriteria/{$module}sByCriteriaSearcher.php", $this->getStub('Searcher', $context, $module));
         }
     }
 
@@ -133,12 +140,17 @@ final class MakeModuleCommand extends Command
             $this->createFile("$basePath/Infrastructure/Controller/Search{$module}sByCriteriaController.php", $this->getStub('SearchByCriteriaController', $context, $module));
         }
 
-        $this->createFile("$basePath/Infrastructure/Controller/Delete{$module}Controller.php", $this->getStub('DeleteController', $context, $module));
+        if (! $this->option('no-deleter')) {
+            File::makeDirectory("$basePath/Application/Delete", 0755, true);
+            $this->createFile("$basePath/Application/Delete/Delete{$module}Command.php", $this->getStub('DeleteCommand', $context, $module));
+            $this->createFile("$basePath/Application/Delete/Delete{$module}CommandHandler.php", $this->getStub('DeleteCommandHandler', $context, $module));
+            $this->createFile("$basePath/Infrastructure/Controller/Delete{$module}Controller.php", $this->getStub('DeleteController', $context, $module));
+        }
     }
 
-    private function createTests(string $context, string $module, string $basePath): void
+    private function createTests(string $context, string $module, string $testBasePath): void
     {
-        $this->createFile("$basePath/Tests/Domain/{$module}Test.php", $this->getStub('UnitTest', $context, $module));
+        $this->createFile("$testBasePath/Domain/{$module}Test.php", $this->getStub('UnitTest', $context, $module));
     }
 
     private function createFile(string $path, string $content): void
@@ -147,7 +159,7 @@ final class MakeModuleCommand extends Command
     }
 
     /**
-     * @param array<string, string> $replacements
+     * @param  array<string, string>  $replacements
      */
     private function getStub(string $name, string $context, string $module, array $replacements = []): string
     {
@@ -156,8 +168,9 @@ final class MakeModuleCommand extends Command
 
         $replacements = array_merge([
             'namespace' => "{$this->rootNamespace()}\\{$context}\\{$module}",
-            'context'   => $context,
-            'module'    => $module,
+            'rootNamespace' => $this->rootNamespace(),
+            'context' => $context,
+            'module' => $module,
             'module_lc' => strtolower($module),
         ], $replacements);
 

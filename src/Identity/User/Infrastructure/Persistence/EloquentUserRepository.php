@@ -11,7 +11,6 @@ use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteria;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteriaConverter;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentRepository;
-use Illuminate\Database\Eloquent\Model;
 
 /**
  * @extends EloquentRepository<UserModel>
@@ -20,9 +19,9 @@ final class EloquentUserRepository extends EloquentRepository implements UserRep
 {
     /** @var array<string, string> */
     protected array $toEloquentFields = [
-        'id'    => 'id',
+        'id' => 'id',
         'email' => 'email',
-        'name'  => 'name',
+        'name' => 'name',
     ];
 
     public function save(User $user): void
@@ -52,9 +51,17 @@ final class EloquentUserRepository extends EloquentRepository implements UserRep
         $models = $this->matching($eloquentCriteria)->get();
 
         return array_map(
-            fn (Model $model) => $this->toDomain($model->toArray()),
+            fn (UserModel $model) => $this->toDomain($model->toArray()),
             $models->all()
         );
+    }
+
+    public function countByCriteria(Criteria $criteria): int
+    {
+        /** @var EloquentCriteria<UserModel> $eloquentCriteria */
+        $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, $this->toEloquentFields);
+
+        return $this->count($eloquentCriteria);
     }
 
     public function delete(UserId $id): bool
@@ -67,14 +74,4 @@ final class EloquentUserRepository extends EloquentRepository implements UserRep
     {
         return User::fromPrimitives($primitives);
     }
-}
-
-/**
- * Stub/Proxy for User model since this is a package.
- * In a real app, this would be a real Eloquent Model.
- */
-class UserModel extends Model
-{
-    protected $table = 'users';
-    protected $guarded = [];
 }

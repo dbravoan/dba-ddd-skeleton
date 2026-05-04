@@ -9,7 +9,7 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
 final readonly class SearchUsersByCriteriaQuery implements Query
 {
     /**
-     * @param array<int, array<string, mixed>> $filters
+     * @param  array<int, array<string, mixed>>  $filters
      */
     public function __construct(
         private array $filters,

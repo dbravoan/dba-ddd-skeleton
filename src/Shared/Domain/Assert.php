@@ -9,8 +9,8 @@ use InvalidArgumentException;
 final class Assert
 {
     /**
-     * @param array<int, string> $classes
-     * @param array<int, mixed> $items
+     * @param  array<int, string>  $classes
+     * @param  array<int, mixed>  $items
      */
     public static function arrayOf(array $classes, array $items): void
     {
@@ -20,7 +20,7 @@ final class Assert
     }
 
     /**
-     * @param array<int, string> $classes
+     * @param  array<int, string>  $classes
      */
     public static function instanceOf(array $classes, mixed $item): void
     {

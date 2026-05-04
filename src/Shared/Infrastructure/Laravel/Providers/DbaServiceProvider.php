@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Infrastructure\Laravel\Providers;
 
+use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandHandler;
+use Dba\DddSkeleton\Shared\Domain\Bus\Event\DomainEventSubscriber;
+use Dba\DddSkeleton\Shared\Domain\Bus\Query\QueryHandler;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
-use ReflectionClass;
 use Symfony\Component\Finder\Finder;
 
 abstract class DbaServiceProvider extends ServiceProvider
@@ -30,17 +31,20 @@ abstract class DbaServiceProvider extends ServiceProvider
             return;
         }
 
-        $finder = new Finder();
+        $finder = new Finder;
         $finder->files()->in($path)->name('*Handler.php');
 
         foreach ($finder as $file) {
             $class = $this->getClassFromFile($file->getRealPath());
 
             if ($class && class_exists($class)) {
-                $this->app->tag($class, 'dba_handler');
-                
-                // If it's a CommandHandler, we might want to register it specifically if we have a custom bus
-                // that uses tags. But our LaravelCommandBus uses constructor injection of an iterable.
+                if (is_a($class, CommandHandler::class, true)) {
+                    $this->app->tag($class, 'dba_ddd.command_handler');
+                } elseif (is_a($class, QueryHandler::class, true)) {
+                    $this->app->tag($class, 'dba_ddd.query_handler');
+                } elseif (is_a($class, DomainEventSubscriber::class, true)) {
+                    $this->app->tag($class, 'dba_ddd.domain_event_subscriber');
+                }
             }
         }
     }

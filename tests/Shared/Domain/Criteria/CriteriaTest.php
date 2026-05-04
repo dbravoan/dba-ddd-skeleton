@@ -13,17 +13,18 @@ use Dba\DddSkeleton\Shared\Domain\Criteria\FilterValue;
 use Dba\DddSkeleton\Shared\Domain\Criteria\Order;
 use Dba\DddSkeleton\Shared\Domain\Criteria\OrderBy;
 use Dba\DddSkeleton\Shared\Domain\Criteria\OrderType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CriteriaTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_should_create_criteria(): void
     {
         $filters = new Filters([
             new Filter(
                 new FilterField('name'),
-                new FilterOperator(FilterOperator::EQUAL),
+                FilterOperator::EQUAL,
                 new FilterValue('John')
             ),
         ]);

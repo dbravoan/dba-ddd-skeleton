@@ -11,14 +11,14 @@ final class User extends AggregateRoot
     public function __construct(
         private readonly UserId $id,
         private UserEmail $email,
-        private string $name
+        private UserName $name
     ) {}
 
-    public static function create(UserId $id, UserEmail $email, string $name): self
+    public static function create(UserId $id, UserEmail $email, UserName $name): self
     {
         $user = new self($id, $email, $name);
 
-        $user->record(new UserCreatedDomainEvent($id->value(), $email->value(), $name));
+        $user->record(new UserCreatedDomainEvent($id->value(), $email->value(), $name->value()));
 
         return $user;
     }
@@ -33,7 +33,7 @@ final class User extends AggregateRoot
         return new self(
             new UserId(is_string($id) ? $id : ''),
             new UserEmail(is_string($email) ? $email : ''),
-            is_string($name) ? $name : ''
+            new UserName(is_string($name) ? $name : '')
         );
     }
 
@@ -47,7 +47,7 @@ final class User extends AggregateRoot
         return $this->email;
     }
 
-    public function name(): string
+    public function name(): UserName
     {
         return $this->name;
     }
@@ -58,11 +58,11 @@ final class User extends AggregateRoot
         return [
             'id' => $this->id->value(),
             'email' => $this->email->value(),
-            'name' => $this->name,
+            'name' => $this->name->value(),
         ];
     }
 
-    public function rename(string $newName): void
+    public function rename(UserName $newName): void
     {
         $this->name = $newName;
     }

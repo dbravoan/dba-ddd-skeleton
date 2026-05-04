@@ -14,7 +14,7 @@ final class LaravelEventBus implements EventBus
     private array $subscribersByEvent = [];
 
     /**
-     * @param iterable<DomainEventSubscriber> $subscribers
+     * @param  iterable<DomainEventSubscriber>  $subscribers
      */
     public function __construct(iterable $subscribers)
     {
@@ -34,7 +34,7 @@ final class LaravelEventBus implements EventBus
     }
 
     /**
-     * @param iterable<DomainEventSubscriber> $subscribers
+     * @param  iterable<DomainEventSubscriber>  $subscribers
      */
     private function mapSubscribers(iterable $subscribers): void
     {

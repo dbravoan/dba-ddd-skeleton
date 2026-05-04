@@ -20,7 +20,7 @@ final readonly class SearchUsersByCriteriaQueryHandler implements QueryHandler
     public function __invoke(SearchUsersByCriteriaQuery $query): UsersResponse
     {
         $filters = Filters::fromValues(['groups' => $query->filters()]);
-        $order   = Order::fromValues($query->orderBy(), $query->orderType());
+        $order = Order::fromValues($query->orderBy(), $query->orderType());
 
         $criteria = new Criteria($filters, $order, $query->offset(), $query->limit());
 

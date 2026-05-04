@@ -6,11 +6,12 @@ namespace Dba\DddSkeleton\Tests\Shared\Domain\ValueObject;
 
 use Dba\DddSkeleton\Shared\Domain\ValueObject\Uuid;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class UuidTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_should_create_a_valid_uuid(): void
     {
         $uuidValue = '00000000-0000-0000-0000-000000000000';
@@ -20,21 +21,21 @@ final class UuidTest extends TestCase
         $this->assertEquals($uuidValue, (string) $uuid);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_throw_exception_for_invalid_uuid(): void
     {
         $this->expectException(InvalidArgumentException::class);
         new Uuid('invalid-uuid');
     }
 
-    /** @test */
+    #[Test]
     public function it_should_generate_a_random_uuid(): void
     {
         $uuid = Uuid::random();
         $this->assertInstanceOf(Uuid::class, $uuid);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_be_equal_to_another_uuid_with_same_value(): void
     {
         $uuidValue = '00000000-0000-0000-0000-000000000000';

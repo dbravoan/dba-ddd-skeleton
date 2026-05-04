@@ -21,7 +21,7 @@ abstract readonly class DateTimeValueObject
 
     public static function now(): static
     {
-        return new static(Utils::dateToString(new DateTimeImmutable()));
+        return new static(Utils::dateToString(new DateTimeImmutable));
     }
 
     public static function fromString(string $value): static

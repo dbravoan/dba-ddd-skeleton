@@ -20,8 +20,8 @@ abstract class QueryBuilderRepository
     }
 
     /**
-     * @param string $method
-     * @param array<mixed> $arguments
+     * @param  string  $method
+     * @param  array<mixed>  $arguments
      * @return mixed
      */
     public function __call($method, $arguments)

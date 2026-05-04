@@ -15,8 +15,8 @@ final class ProcessDomainEventJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     /**
-     * @param class-string<DomainEvent> $eventClass
-     * @param array<string, mixed> $body
+     * @param  class-string<DomainEvent>  $eventClass
+     * @param  array<string, mixed>  $body
      */
     public function __construct(
         private readonly string $eventClass,

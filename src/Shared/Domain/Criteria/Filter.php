@@ -13,7 +13,7 @@ final class Filter
     ) {}
 
     /**
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      */
     public static function fromValues(array $values): self
     {
@@ -27,7 +27,7 @@ final class Filter
 
         return new self(
             new FilterField($field),
-            new FilterOperator($operator),
+            FilterOperator::from($operator),
             new FilterValue($value)
         );
     }

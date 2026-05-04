@@ -1,30 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Dba\DddSkeleton\Shared\Infrastructure\Persistence\QueryBuilder;
 
-class Method
+final class Method
 {
-    /**
-     * $name.
-     *
-     * @var string
-     */
-    public $name;
-
-    /**
-     * $parameters.
-     *
-     * @var mixed
-     */
-    public $parameters;
-
-    /**
-     * @param  string  $name
-     * @param  mixed  $parameters
-     */
-    public function __construct($name, $parameters = [])
-    {
-        $this->name = $name;
-        $this->parameters = $parameters;
-    }
+    public function __construct(
+        public readonly string $name,
+        public readonly mixed $parameters = []
+    ) {}
 }

@@ -49,7 +49,6 @@ abstract class EloquentRepository
     /**
      * Find a model by its primary key.
      *
-     * @param  mixed  $id
      * @param  array<int, string>  $columns
      * @return TModel|null
      */
@@ -79,7 +78,6 @@ abstract class EloquentRepository
     /**
      * Find a model by its primary key or throw an exception.
      *
-     * @param  mixed  $id
      * @param  array<int, string>  $columns
      * @return TModel
      *
@@ -96,7 +94,6 @@ abstract class EloquentRepository
     /**
      * Find a model by its primary key or return fresh model instance.
      *
-     * @param  mixed  $id
      * @param  array<int, string>  $columns
      * @return TModel
      */
@@ -111,8 +108,8 @@ abstract class EloquentRepository
     /**
      * Get the first record matching the attributes or instantiate it.
      *
-     * @param array<string, mixed> $attributes
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $values
      * @return TModel
      */
     public function firstOrNew(array $attributes, array $values = []): Model
@@ -126,8 +123,8 @@ abstract class EloquentRepository
     /**
      * Get the first record matching the attributes or create it.
      *
-     * @param array<string, mixed> $attributes
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $values
      * @return TModel
      */
     public function firstOrCreate(array $attributes, array $values = []): Model
@@ -141,8 +138,8 @@ abstract class EloquentRepository
     /**
      * Create or update a record matching the attributes, and fill it with values.
      *
-     * @param array<string, mixed> $attributes
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $values
      * @return TModel
      */
     public function updateOrCreate(array $attributes, array $values = []): Model
@@ -205,7 +202,6 @@ abstract class EloquentRepository
     /**
      * update.
      *
-     * @param  mixed  $id
      * @param  array<string, mixed>  $attributes
      * @return TModel
      *
@@ -224,7 +220,6 @@ abstract class EloquentRepository
     /**
      * forceUpdate.
      *
-     * @param  mixed  $id
      * @param  array<string, mixed>  $attributes
      * @return TModel
      *
@@ -242,9 +237,6 @@ abstract class EloquentRepository
 
     /**
      * delete.
-     *
-     * @param  mixed  $id
-     * @return bool|null
      */
     public function delete(mixed $id): ?bool
     {
@@ -255,9 +247,6 @@ abstract class EloquentRepository
 
     /**
      * Restore a soft-deleted model instance.
-     *
-     * @param  mixed  $id
-     * @return bool|null
      */
     public function restore(mixed $id): ?bool
     {
@@ -271,9 +260,6 @@ abstract class EloquentRepository
      * Force a hard delete on a soft deleted model.
      *
      * This method protects developers from running forceDelete when trait is missing.
-     *
-     * @param  mixed  $id
-     * @return bool|null
      */
     public function forceDelete(mixed $id): ?bool
     {
@@ -314,9 +300,7 @@ abstract class EloquentRepository
      * Chunk the results of the query.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  int  $count
      * @param  callable(Collection<int, TModel>, int): mixed  $callback
-     * @return bool
      */
     public function chunk(EloquentCriteria|array $criteria, int $count, callable $callback): bool
     {
@@ -328,8 +312,6 @@ abstract class EloquentRepository
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
      * @param  callable(TModel, int): bool  $callback
-     * @param  int  $count
-     * @return bool
      */
     public function each(EloquentCriteria|array $criteria, callable $callback, int $count = 1000): bool
     {
@@ -355,10 +337,7 @@ abstract class EloquentRepository
      * Paginate the given query.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  int|null  $perPage
      * @param  array<int, string>  $columns
-     * @param  string  $pageName
-     * @param  int|null  $page
      * @return LengthAwarePaginator<int, TModel>
      *
      * @throws InvalidArgumentException
@@ -375,10 +354,7 @@ abstract class EloquentRepository
      * Paginate the given query into a simple paginator.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  int|null  $perPage
      * @param  array<int, string>  $columns
-     * @param  string  $pageName
-     * @param  int|null  $page
      * @return Paginator<int, TModel>
      */
     public function simplePaginate(EloquentCriteria|array $criteria = [], ?int $perPage = null, array $columns = ['*'], string $pageName = 'page', ?int $page = null): Paginator
@@ -394,7 +370,6 @@ abstract class EloquentRepository
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
      * @param  string|array<int, string>  $columns
-     * @return int
      */
     public function count(EloquentCriteria|array $criteria = [], string|array $columns = '*'): int
     {
@@ -409,8 +384,6 @@ abstract class EloquentRepository
      * Retrieve the minimum value of a given column.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  string  $column
-     * @return float|int
      */
     public function min(EloquentCriteria|array $criteria, string $column): float|int
     {
@@ -423,8 +396,6 @@ abstract class EloquentRepository
      * Retrieve the maximum value of a given column.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  string  $column
-     * @return float|int
      */
     public function max(EloquentCriteria|array $criteria, string $column): float|int
     {
@@ -437,8 +408,6 @@ abstract class EloquentRepository
      * Retrieve the sum of the values of a given column.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  string  $column
-     * @return float|int
      */
     public function sum(EloquentCriteria|array $criteria, string $column): float|int
     {
@@ -451,8 +420,6 @@ abstract class EloquentRepository
      * Retrieve the average of the values of a given column.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  string  $column
-     * @return float|int
      */
     public function avg(EloquentCriteria|array $criteria, string $column): float|int
     {
@@ -465,8 +432,6 @@ abstract class EloquentRepository
      * Alias for the "avg" method.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @param  string  $column
-     * @return float|int
      */
     public function average(EloquentCriteria|array $criteria, string $column): float|int
     {
@@ -501,7 +466,6 @@ abstract class EloquentRepository
      * getQuery.
      *
      * @param  EloquentCriteria<TModel>|EloquentCriteria<TModel>[]|array<mixed>  $criteria
-     * @return QueryBuilder
      */
     public function getQuery(EloquentCriteria|array $criteria = []): QueryBuilder
     {

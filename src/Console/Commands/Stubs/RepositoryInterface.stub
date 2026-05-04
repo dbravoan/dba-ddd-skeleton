@@ -14,6 +14,7 @@ interface {{module}}Repository
 
     public function search({{module}}Id $id): ?{{module}};
 
+    /** @return array<int, {{module}}> */
     public function searchByCriteria(Criteria $criteria): array;
 
     public function countByCriteria(Criteria $criteria): int;

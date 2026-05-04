@@ -18,7 +18,7 @@ final class Update{{module}}Controller extends ApiController
     {
         $command = new Update{{module}}Command(
             $id,
-            $request->input('name')
+            is_string($request->input('name')) ? $request->input('name') : null
         );
 
         $this->bus->dispatch($command);

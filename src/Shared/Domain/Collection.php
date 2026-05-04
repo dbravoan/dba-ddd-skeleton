@@ -10,12 +10,13 @@ use IteratorAggregate;
 
 /**
  * @template T
+ *
  * @implements IteratorAggregate<int, T>
  */
 abstract class Collection implements Countable, IteratorAggregate
 {
     /**
-     * @param array<int, T> $items
+     * @param  array<int, T>  $items
      */
     public function __construct(private readonly array $items)
     {

@@ -13,10 +13,9 @@ use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteriaC
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentRepository;
 use Illuminate\Database\Eloquent\Model;
 
-use function Lambdish\Phunctional\map;
-
 final class Eloquent{{module}}Repository extends EloquentRepository implements {{module}}Repository
 {
+    /** @var array<string, string> */
     private static array $toEloquentFields = [
         'id' => 'id',
         'name' => 'name',
@@ -52,29 +51,21 @@ final class Eloquent{{module}}Repository extends EloquentRepository implements {
     public function searchByCriteria(Criteria $criteria): array
     {
         $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, self::$toEloquentFields);
-        $query = $this->model->newQuery();
 
-        $eloquentCriteria->each(static function ($method) use ($query) {
-            call_user_func_array([$query, $method->name], $method->parameters);
-        });
-
-        $results = $query->get()->toArray();
-
-        return map(fn(array $row) => $this->toDomain($row), $results);
+        return array_map(
+            fn (\Illuminate\Database\Eloquent\Model $model) => $this->toDomain($model->toArray()),
+            $this->matching($eloquentCriteria)->get()->all()
+        );
     }
 
     public function countByCriteria(Criteria $criteria): int
     {
         $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, self::$toEloquentFields);
-        $query = $this->model->newQuery();
 
-        $eloquentCriteria->each(static function ($method) use ($query) {
-            call_user_func_array([$query, $method->name], $method->parameters);
-        });
-
-        return $query->count();
+        return $this->count($eloquentCriteria);
     }
 
+    /** @param array<string, mixed> $primitives */
     private function toDomain(array $primitives): {{module}}
     {
         return {{module}}::fromPrimitives($primitives);

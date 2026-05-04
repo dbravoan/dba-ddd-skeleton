@@ -6,9 +6,10 @@ namespace Dba\DddSkeleton\Identity\User\Application\Update;
 
 use Dba\DddSkeleton\Identity\User\Domain\UserEmail;
 use Dba\DddSkeleton\Identity\User\Domain\UserId;
+use Dba\DddSkeleton\Identity\User\Domain\UserName;
+use Dba\DddSkeleton\Identity\User\Domain\UserNotFoundDomainError;
 use Dba\DddSkeleton\Identity\User\Domain\UserRepository;
 use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandHandler;
-use InvalidArgumentException;
 
 final readonly class UpdateUserCommandHandler implements CommandHandler
 {
@@ -20,11 +21,10 @@ final readonly class UpdateUserCommandHandler implements CommandHandler
         $user = $this->repository->search($userId);
 
         if ($user === null) {
-            throw new InvalidArgumentException(sprintf('User <%s> does not exist', $command->id));
+            throw new UserNotFoundDomainError($command->id);
         }
 
-        // Aquí el agente debe ver que el dominio es el que cambia, no el repo directamente
-        $user->rename($command->name);
+        $user->rename(new UserName($command->name));
         $user->changeEmail(new UserEmail($command->email));
 
         $this->repository->save($user);

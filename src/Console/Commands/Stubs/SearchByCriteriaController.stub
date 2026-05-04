@@ -22,12 +22,15 @@ final class Search{{module}}sByCriteriaController extends ApiController
 
     public function __invoke(Request $request): JsonResponse
     {
-        $criteria = $this->requestCriteriaBuilder->buildFromRequest($request);
+        $criteria = $this->requestCriteriaBuilder->build($request);
         $offset = (int) $criteria->offset();
         $limit = $criteria->limit();
 
+        /** @var array<mixed> $filters */
+        $filters = is_array($request->get('filters')) ? $request->get('filters') : [];
+
         $searchQuery = new Search{{module}}sByCriteriaQuery(
-            $request->get('filters', []),
+            $filters,
             $criteria->order()->orderBy()?->value(),
             $criteria->order()->orderType()?->value(),
             $limit,
@@ -37,21 +40,25 @@ final class Search{{module}}sByCriteriaController extends ApiController
         /** @var {{module}}sResponse ${{module_lc}}sResponse */
         ${{module_lc}}sResponse = $this->bus->ask($searchQuery);
 
-        $filteredRecords = $this->bus->ask(new Count{{module}}sByCriteriaQuery(
-            $request->get('filters', []),
+        /** @var \Dba\DddSkeleton\Shared\Domain\Bus\Query\CountResponse $filteredResponse */
+        $filteredResponse = $this->bus->ask(new Count{{module}}sByCriteriaQuery(
+            $filters,
             null,
             null,
             null,
             null
-        ))->count();
+        ));
+        $filteredRecords = $filteredResponse->count();
 
-        $totalRecords = $this->bus->ask(new Count{{module}}sByCriteriaQuery(
+        /** @var \Dba\DddSkeleton\Shared\Domain\Bus\Query\CountResponse $totalResponse */
+        $totalResponse = $this->bus->ask(new Count{{module}}sByCriteriaQuery(
             [],
             null,
             null,
             null,
             null
-        ))->count();
+        ));
+        $totalRecords = $totalResponse->count();
 
         $currentPage = $limit ? (int) floor($offset / $limit) + 1 : 1;
         $totalPages = $limit ? (int) ceil($filteredRecords / $limit) : 1;
@@ -59,12 +66,12 @@ final class Search{{module}}sByCriteriaController extends ApiController
         $response = [
             'data' => ${{module_lc}}sResponse->toArray(),
             'meta' => [
-                'current_page' => $currentPage,
-                'total_pages' => $totalPages,
+                'current_page'     => $currentPage,
+                'total_pages'      => $totalPages,
                 'filtered_records' => $filteredRecords,
-                'total_records' => $totalRecords,
-                'per_page' => $limit
-            ]
+                'total_records'    => $totalRecords,
+                'per_page'         => $limit,
+            ],
         ];
 
         return $this->sendResponse($response, '{{module}}s searched successfully');

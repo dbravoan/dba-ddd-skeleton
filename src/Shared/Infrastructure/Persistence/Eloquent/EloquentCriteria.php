@@ -18,7 +18,9 @@ use ReflectionMethod;
 
 /**
  * @template TModel of Model
+ *
  * @mixin EloquentBuilder<TModel>
+ *
  * @phpstan-consistent-constructor
  */
 class EloquentCriteria
@@ -69,33 +71,24 @@ class EloquentCriteria
 
     /**
      * create.
-     *
-     * @return static
      */
     public static function create(): static
     {
         /** @phpstan-ignore-next-line */
-        return new static();
+        return new static;
     }
 
     /**
      * alias raw.
-     *
-     * @param  float|int|string|\Stringable  $value
-     * @return Expression
      */
     public static function expr(float|int|string|\Stringable $value): Expression
     {
         return static::raw($value);
     }
 
-    /**
-     * @param  float|int|string|\Stringable  $value
-     * @return Expression
-     */
     public static function raw(float|int|string|\Stringable $value): Expression
     {
-        return new Expression($value);
+        return new Expression(is_string($value) ? $value : (string) $value);
     }
 
     /**
@@ -161,8 +154,6 @@ class EloquentCriteria
     }
 
     /**
-     * @return bool
-     *
      * @throws ReflectionException
      */
     private function hasMethod(string $method): bool

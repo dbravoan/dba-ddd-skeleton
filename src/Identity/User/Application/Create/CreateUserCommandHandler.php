@@ -7,6 +7,7 @@ namespace Dba\DddSkeleton\Identity\User\Application\Create;
 use Dba\DddSkeleton\Identity\User\Domain\User;
 use Dba\DddSkeleton\Identity\User\Domain\UserEmail;
 use Dba\DddSkeleton\Identity\User\Domain\UserId;
+use Dba\DddSkeleton\Identity\User\Domain\UserName;
 use Dba\DddSkeleton\Identity\User\Domain\UserRepository;
 use Dba\DddSkeleton\Shared\Domain\Bus\Command\CommandHandler;
 
@@ -19,7 +20,7 @@ final readonly class CreateUserCommandHandler implements CommandHandler
         $user = User::create(
             new UserId($command->id),
             new UserEmail($command->email),
-            $command->name
+            new UserName($command->name)
         );
 
         $this->repository->save($user);

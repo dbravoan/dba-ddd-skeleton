@@ -6,6 +6,4 @@ namespace Dba\DddSkeleton\Identity\User\Domain;
 
 use Dba\DddSkeleton\Shared\Domain\ValueObject\EmailValueObject;
 
-final readonly class UserEmail extends EmailValueObject
-{
-}
+final readonly class UserEmail extends EmailValueObject {}

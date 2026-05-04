@@ -7,11 +7,12 @@ namespace Dba\DddSkeleton\Tests\Shared\Domain\ValueObject;
 use Dba\DddSkeleton\Shared\Domain\ValueObject\BoolValueObject;
 use Dba\DddSkeleton\Shared\Domain\ValueObject\FloatValueObject;
 use Dba\DddSkeleton\Shared\Domain\ValueObject\IntValueObject;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValueObjectTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_should_store_a_bool_value(): void
     {
         $trueValue = new readonly class(true) extends BoolValueObject {};
@@ -26,7 +27,7 @@ final class ValueObjectTest extends TestCase
         $this->assertTrue($falseValue->isFalse());
     }
 
-    /** @test */
+    #[Test]
     public function it_should_store_an_int_value(): void
     {
         $value1 = new readonly class(10) extends IntValueObject {};
@@ -37,7 +38,7 @@ final class ValueObjectTest extends TestCase
         $this->assertFalse($value2->isBiggerThan($value1));
     }
 
-    /** @test */
+    #[Test]
     public function it_should_store_a_float_value(): void
     {
         $value1 = new readonly class(10.5) extends FloatValueObject {};

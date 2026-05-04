@@ -14,7 +14,7 @@ abstract class AggregateRoot
     /** @return DomainEvent[] */
     final public function pullDomainEvents(): array
     {
-        $domainEvents       = $this->domainEvents;
+        $domainEvents = $this->domainEvents;
         $this->domainEvents = [];
 
         return $domainEvents;
@@ -27,7 +27,6 @@ abstract class AggregateRoot
 
     protected function createNullableValueObject(string $class, mixed $value): ?object
     {
-        return empty($value) ? null : new $class($value);
+        return ($value === null || $value === '') ? null : new $class($value);
     }
 }
-

@@ -8,6 +8,9 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\Query;
 
 final readonly class Count{{module}}sByCriteriaQuery implements Query
 {
+    /**
+     * @param array<mixed> $filters
+     */
     public function __construct(
         private array $filters,
         private ?string $orderBy,
@@ -16,6 +19,7 @@ final readonly class Count{{module}}sByCriteriaQuery implements Query
         private ?int $offset
     ) {}
 
+    /** @return array<mixed> */
     public function filters(): array
     {
         return $this->filters;

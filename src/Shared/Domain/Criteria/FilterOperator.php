@@ -4,41 +4,24 @@ declare(strict_types=1);
 
 namespace Dba\DddSkeleton\Shared\Domain\Criteria;
 
-final class FilterOperator
+enum FilterOperator: string
 {
-    public const EQUAL = '=';
-
-    public const NOT_EQUAL = '!=';
-
-    public const GT = '>';
-
-    public const LT = '<';
-
-    public const GTE = '>=';
-
-    public const LTE = '<=';
-
-    public const IN = 'IN';
-
-    public const NOT_IN = 'NOT IN';
-
-    public const CONTAINS = 'CONTAINS';
-
-    public const NOT_CONTAINS = 'NOT_CONTAINS';
-
-    public const STARTS_WITH = 'STARTS_WITH';
-
-    public const ENDS_WITH = 'ENDS_WITH';
-
-    public const IS_NULL = 'IS_NULL';
-
-    public const IS_NOT_NULL = 'IS_NOT_NULL';
-
-    public const BETWEEN = 'BETWEEN';
-
-    public const NOT_BETWEEN = 'NOT_BETWEEN';
-
-    public function __construct(private readonly string $value) {}
+    case EQUAL = '=';
+    case NOT_EQUAL = '!=';
+    case GT = '>';
+    case LT = '<';
+    case GTE = '>=';
+    case LTE = '<=';
+    case IN = 'IN';
+    case NOT_IN = 'NOT IN';
+    case CONTAINS = 'CONTAINS';
+    case NOT_CONTAINS = 'NOT_CONTAINS';
+    case STARTS_WITH = 'STARTS_WITH';
+    case ENDS_WITH = 'ENDS_WITH';
+    case IS_NULL = 'IS_NULL';
+    case IS_NOT_NULL = 'IS_NOT_NULL';
+    case BETWEEN = 'BETWEEN';
+    case NOT_BETWEEN = 'NOT_BETWEEN';
 
     public function value(): string
     {

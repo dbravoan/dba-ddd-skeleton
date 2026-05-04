@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Dba\DddSkeleton\Shared\Infrastructure\Persistence\QueryBuilder;
 
 use Illuminate\Database\Query\Expression as QueryExpression;
@@ -10,19 +12,7 @@ use Illuminate\Database\Query\Expression as QueryExpression;
 class Expression extends QueryExpression
 {
     /**
-     * Create a new raw query expression.
-     *
-     * @param  float|int|string|\Stringable  $value
-     */
-    public function __construct($value)
-    {
-        parent::__construct($value);
-    }
-
-    /**
      * Get the value of the expression.
-     *
-     * @return string
      */
     public function __toString(): string
     {

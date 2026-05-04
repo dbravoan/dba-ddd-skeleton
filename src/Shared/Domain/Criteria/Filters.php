@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Dba\DddSkeleton\Shared\Domain\Criteria;
 
 use Dba\DddSkeleton\Shared\Domain\Collection;
-use InvalidArgumentException;
 
 use function Lambdish\Phunctional\map;
 use function Lambdish\Phunctional\reduce;
@@ -16,7 +15,7 @@ use function Lambdish\Phunctional\reduce;
 final class Filters extends Collection
 {
     /**
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      */
     public static function fromValues(array $values): self
     {
@@ -52,7 +51,7 @@ final class Filters extends Collection
     }
 
     /**
-     * @param array<int, Filter|FilterGroup> $items
+     * @param  array<int, Filter|FilterGroup>  $items
      */
     public function __construct(array $items = [])
     {

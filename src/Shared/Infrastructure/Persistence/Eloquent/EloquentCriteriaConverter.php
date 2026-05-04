@@ -10,7 +10,6 @@ use Dba\DddSkeleton\Shared\Domain\Criteria\FilterField;
 use Dba\DddSkeleton\Shared\Domain\Criteria\FilterGroup;
 use Dba\DddSkeleton\Shared\Domain\Criteria\FilterOperator;
 use Dba\DddSkeleton\Shared\Domain\Criteria\OrderBy;
-use Dba\DddSkeleton\Shared\Infrastructure\Persistence\QueryBuilder\Method;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,8 +22,8 @@ final class EloquentCriteriaConverter
     private EloquentCriteria $eloquent_criteria;
 
     /**
-     * @param array<string, string> $criteriaToEloquentFields
-     * @param array<string, callable> $hydrators
+     * @param  array<string, string>  $criteriaToEloquentFields
+     * @param  array<string, callable>  $hydrators
      */
     public function __construct(
         private readonly Criteria $criteria,
@@ -33,8 +32,8 @@ final class EloquentCriteriaConverter
     ) {}
 
     /**
-     * @param array<string, string> $criteriaToEloquentFields
-     * @param array<string, callable> $hydrators
+     * @param  array<string, string>  $criteriaToEloquentFields
+     * @param  array<string, callable>  $hydrators
      * @return EloquentCriteria<Model>
      */
     public static function convert(
@@ -55,7 +54,7 @@ final class EloquentCriteriaConverter
         /** @var EloquentCriteria<TModel> $criteria */
         $criteria = EloquentCriteria::create();
         $this->eloquent_criteria = $criteria;
-        
+
         $this->buildExpression($this->criteria);
         $this->formatOrder($this->criteria);
         if ($this->criteria->offset()) {
@@ -109,49 +108,49 @@ final class EloquentCriteriaConverter
             $value = $valueString;
         }
 
-        if ($filter->operator()->value() === FilterOperator::CONTAINS) {
+        if ($filter->operator() === FilterOperator::CONTAINS) {
             $query->{$glueMethod}($field, 'LIKE', '%'.$value.'%');
-        } elseif ($filter->operator()->value() === FilterOperator::NOT_CONTAINS) {
+        } elseif ($filter->operator() === FilterOperator::NOT_CONTAINS) {
             $query->{$glueMethod}($field, 'NOT LIKE', '%'.$value.'%');
-        } elseif ($filter->operator()->value() === FilterOperator::IN) {
+        } elseif ($filter->operator() === FilterOperator::IN) {
             $query->{$glueMethod.'In'}($field, explode(',', $value));
-        } elseif ($filter->operator()->value() === FilterOperator::NOT_IN) {
+        } elseif ($filter->operator() === FilterOperator::NOT_IN) {
             $query->{$glueMethod.'NotIn'}($field, explode(',', $value));
-        } elseif ($filter->operator()->value() === FilterOperator::BETWEEN) {
+        } elseif ($filter->operator() === FilterOperator::BETWEEN) {
             $values = explode(',', $value);
             if (count($values) === 2) {
                 $query->{$glueMethod.'Between'}($field, [$values[0], $values[1]]);
             } else {
                 throw new \InvalidArgumentException('BETWEEN operator requires two values');
             }
-        } elseif ($filter->operator()->value() === FilterOperator::NOT_BETWEEN) {
+        } elseif ($filter->operator() === FilterOperator::NOT_BETWEEN) {
             $values = explode(',', $value);
             if (count($values) === 2) {
                 $query->{$glueMethod.'NotBetween'}($field, [$values[0], $values[1]]);
             } else {
                 throw new \InvalidArgumentException('NOT BETWEEN operator requires two values');
             }
-        } elseif ($filter->operator()->value() === FilterOperator::STARTS_WITH) {
+        } elseif ($filter->operator() === FilterOperator::STARTS_WITH) {
             $query->{$glueMethod}($field, 'LIKE', $value.'%');
-        } elseif ($filter->operator()->value() === FilterOperator::ENDS_WITH) {
+        } elseif ($filter->operator() === FilterOperator::ENDS_WITH) {
             $query->{$glueMethod}($field, 'LIKE', '%'.$value);
-        } elseif ($filter->operator()->value() === FilterOperator::GT) {
+        } elseif ($filter->operator() === FilterOperator::GT) {
             $query->{$glueMethod}($field, '>', $value);
-        } elseif ($filter->operator()->value() === FilterOperator::LT) {
+        } elseif ($filter->operator() === FilterOperator::LT) {
             $query->{$glueMethod}($field, '<', $value);
-        } elseif ($filter->operator()->value() === FilterOperator::GTE) {
+        } elseif ($filter->operator() === FilterOperator::GTE) {
             $query->{$glueMethod}($field, '>=', $value);
-        } elseif ($filter->operator()->value() === FilterOperator::LTE) {
+        } elseif ($filter->operator() === FilterOperator::LTE) {
             $query->{$glueMethod}($field, '<=', $value);
-        } elseif (($filter->operator()->value() === FilterOperator::EQUAL || $filter->operator()->value() === FilterOperator::NOT_EQUAL) && $value === '') {
-            if ($filter->operator()->value() === FilterOperator::EQUAL) {
+        } elseif (($filter->operator() === FilterOperator::EQUAL || $filter->operator() === FilterOperator::NOT_EQUAL) && $value === '') {
+            if ($filter->operator() === FilterOperator::EQUAL) {
                 $query->{$glueMethod.'Null'}($field);
-            } elseif ($filter->operator()->value() === FilterOperator::NOT_EQUAL) {
+            } elseif ($filter->operator() === FilterOperator::NOT_EQUAL) {
                 $query->{$glueMethod.'NotNull'}($field);
             }
-        } elseif ($filter->operator()->value() === FilterOperator::IS_NULL) {
+        } elseif ($filter->operator() === FilterOperator::IS_NULL) {
             $query->{$glueMethod.'Null'}($field);
-        } elseif ($filter->operator()->value() === FilterOperator::IS_NOT_NULL) {
+        } elseif ($filter->operator() === FilterOperator::IS_NOT_NULL) {
             $query->{$glueMethod.'NotNull'}($field);
         } else {
             $query->{$glueMethod}($field, $filter->operator()->value(), $value);

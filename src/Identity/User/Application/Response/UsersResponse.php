@@ -9,7 +9,7 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
 final readonly class UsersResponse implements Response
 {
     /**
-     * @param array<int, UserResponse> $users
+     * @param  array<int, UserResponse>  $users
      */
     public function __construct(private array $users) {}
 

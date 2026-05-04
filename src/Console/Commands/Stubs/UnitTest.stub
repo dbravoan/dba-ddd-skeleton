@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace {{namespace}}\Tests\Domain;
+namespace {{rootNamespace}}\Tests\{{context}}\{{module}}\Domain;
 
 use {{namespace}}\Domain\{{module}};
 use {{namespace}}\Domain\{{module}}CreatedDomainEvent;
@@ -22,9 +22,46 @@ final class {{module}}Test extends TestCase
 
         $this->assertEquals($id, ${{module_lc}}->id());
         $this->assertEquals($name, ${{module_lc}}->name());
-        
+
         $events = ${{module_lc}}->pullDomainEvents();
         $this->assertCount(1, $events);
         $this->assertInstanceOf({{module}}CreatedDomainEvent::class, $events[0]);
+    }
+
+    /** @test */
+    public function it_should_return_correct_primitives(): void
+    {
+        $id = {{module}}Id::random();
+        $name = new {{module}}Name('Test Name');
+
+        ${{module_lc}} = {{module}}::create($id, $name);
+
+        $primitives = ${{module_lc}}->toPrimitives();
+
+        $this->assertSame($id->value(), $primitives['id']);
+        $this->assertSame($name->value(), $primitives['name']);
+    }
+
+    /** @test */
+    public function it_should_reconstruct_from_primitives(): void
+    {
+        $id = {{module}}Id::random();
+
+        ${{module_lc}} = {{module}}::fromPrimitives([
+            'id'   => $id->value(),
+            'name' => 'From Primitives',
+        ]);
+
+        $this->assertSame($id->value(), ${{module_lc}}->id()->value());
+        $this->assertSame('From Primitives', ${{module_lc}}->name()->value());
+    }
+
+    /** @test */
+    public function it_should_pull_domain_events_only_once(): void
+    {
+        ${{module_lc}} = {{module}}::create({{module}}Id::random(), new {{module}}Name('Test'));
+
+        $this->assertCount(1, ${{module_lc}}->pullDomainEvents());
+        $this->assertCount(0, ${{module_lc}}->pullDomainEvents());
     }
 }

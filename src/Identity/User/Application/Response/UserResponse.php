@@ -19,7 +19,7 @@ final readonly class UserResponse implements Response
     {
         return new self(
             $user->id()->value(),
-            $user->name(),
+            $user->name()->value(),
             $user->email()->value()
         );
     }

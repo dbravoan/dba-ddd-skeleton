@@ -15,5 +15,7 @@ interface UserRepository
     /** @return array<int, User> */
     public function searchByCriteria(Criteria $criteria): array;
 
+    public function countByCriteria(Criteria $criteria): int;
+
     public function delete(UserId $id): bool;
 }

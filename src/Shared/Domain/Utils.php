@@ -34,7 +34,7 @@ final class Utils
     }
 
     /**
-     * @param array<mixed> $values
+     * @param  array<mixed>  $values
      */
     public static function jsonEncode(array $values): string
     {
@@ -67,7 +67,7 @@ final class Utils
     }
 
     /**
-     * @param array<mixed> $array
+     * @param  array<mixed>  $array
      * @return array<string, mixed>
      */
     public static function dot(array $array, string $prepend = ''): array
@@ -103,7 +103,7 @@ final class Utils
     }
 
     /**
-     * @param iterable<mixed> $iterable
+     * @param  iterable<mixed>  $iterable
      * @return array<mixed>
      */
     public static function iterableToArray(iterable $iterable): array

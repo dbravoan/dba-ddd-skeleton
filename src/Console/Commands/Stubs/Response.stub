@@ -9,14 +9,10 @@ use Dba\DddSkeleton\Shared\Domain\Bus\Query\Response;
  
 final class {{module}}Response implements Response
 {
-    private string $id;
-    private string $name;
-
-    public function __construct(string $id, string $name)
-    {
-        $this->id   = $id;
-        $this->name = $name;
-    }
+    public function __construct(
+        private readonly string $id,
+        private readonly string $name
+    ) {}
 
     public static function fromAggregate({{module}} ${{module_lc}}): self
     {
@@ -26,11 +22,12 @@ final class {{module}}Response implements Response
         );
     }
 
+    /** @return array<string, string> */
     public function toArray(): array
     {
         return [
-            'id'         => $this->id,
-            'name'       => $this->name,
+            'id'   => $this->id,
+            'name' => $this->name,
         ];
     }
 }

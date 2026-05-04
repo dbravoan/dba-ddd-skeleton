@@ -11,14 +11,16 @@ use Dba\DddSkeleton\Shared\Domain\ValueObject\Uuid;
 abstract readonly class DomainEvent
 {
     private string $aggregateId;
+
     private string $eventId;
+
     private string $occurredOn;
 
     public function __construct(string $aggregateId, ?string $eventId = null, ?string $occurredOn = null)
     {
         $this->aggregateId = $aggregateId;
-        $this->eventId     = $eventId ?: Uuid::random()->value();
-        $this->occurredOn  = $occurredOn ?: Utils::dateToString(new DateTimeImmutable());
+        $this->eventId = $eventId ?: Uuid::random()->value();
+        $this->occurredOn = $occurredOn ?: Utils::dateToString(new DateTimeImmutable);
     }
 
     /** @param array<string, mixed> $body */

@@ -31,14 +31,16 @@ final class {{module}} extends AggregateRoot
         return $this->name;
     }
 
+    /** @param array<string, mixed> $primitives */
     public static function fromPrimitives(array $primitives): self
     {
         return new self(
-            new {{module}}Id($primitives['id']),
-            new {{module}}Name($primitives['name'])
+            new {{module}}Id(is_string($primitives['id'] ?? null) ? $primitives['id'] : ''),
+            new {{module}}Name(is_string($primitives['name'] ?? null) ? $primitives['name'] : '')
         );
     }
 
+    /** @return array{id: string, name: string} */
     public function toPrimitives(): array
     {
         return [

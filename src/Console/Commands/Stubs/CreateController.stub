@@ -17,8 +17,8 @@ final class Create{{module}}Controller extends ApiController
     public function __invoke(Request $request): JsonResponse
     {
         $command = new Create{{module}}Command(
-            $request->input('id'),
-            $request->input('name')
+            is_string($request->input('id')) ? $request->input('id') : '',
+            is_string($request->input('name')) ? $request->input('name') : ''
         );
 
         $this->bus->dispatch($command);

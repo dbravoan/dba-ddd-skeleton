@@ -30,7 +30,7 @@ final class RequestCriteriaBuilder
         $filtersList = is_array($filtersRaw) ? $filtersRaw : [];
 
         $filters = Filters::fromValues(['groups' => $this->sanitizeFilters($filtersList)]);
-        
+
         $limit = $request->get('limit');
         $offset = $request->get('offset');
 
@@ -63,7 +63,7 @@ final class RequestCriteriaBuilder
     }
 
     /**
-     * @param array<mixed> $filters
+     * @param  array<mixed>  $filters
      * @return array<int, array<string, mixed>>
      */
     private function sanitizeFilters(array $filters): array
@@ -84,7 +84,7 @@ final class RequestCriteriaBuilder
     }
 
     /**
-     * @param array<string, mixed> $group
+     * @param  array<string, mixed>  $group
      * @return array<string, mixed>
      */
     private function sanitizeGroup(array $group): array
@@ -94,7 +94,7 @@ final class RequestCriteriaBuilder
         $filtersList = is_array($filtersRaw) ? $filtersRaw : [];
 
         return [
-            'filters' => array_map(function (mixed $condition) {
+            'conditions' => array_map(function (mixed $condition) {
                 if (! is_array($condition)) {
                     throw new InvalidArgumentException('Filter condition must be an array');
                 }
@@ -107,7 +107,7 @@ final class RequestCriteriaBuilder
     }
 
     /**
-     * @param array<string, mixed> $filter
+     * @param  array<string, mixed>  $filter
      * @return array<string, mixed>
      */
     private function sanitizeFilter(array $filter): array

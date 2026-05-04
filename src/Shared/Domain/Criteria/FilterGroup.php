@@ -7,7 +7,7 @@ namespace Dba\DddSkeleton\Shared\Domain\Criteria;
 final class FilterGroup
 {
     /**
-     * @param array<int, Filter> $filters
+     * @param  array<int, Filter>  $filters
      */
     public function __construct(
         private readonly array $filters,
@@ -15,7 +15,7 @@ final class FilterGroup
     ) {}
 
     /**
-     * @param array<int, Filter> $filters
+     * @param  array<int, Filter>  $filters
      */
     public static function fromValues(array $filters, string $glue): self
     {

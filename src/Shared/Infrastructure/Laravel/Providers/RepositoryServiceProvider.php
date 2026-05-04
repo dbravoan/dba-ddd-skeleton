@@ -14,6 +14,7 @@ final class RepositoryServiceProvider extends ServiceProvider
      * Override this provider in your application to add your own bindings.
      *
      * @see README.md section "Service Providers"
+     *
      * @var array<class-string, class-string>
      */
     private array $repositories = [

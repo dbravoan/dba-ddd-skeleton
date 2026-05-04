@@ -7,11 +7,12 @@ namespace Dba\DddSkeleton\Tests\Shared\Infrastructure\Bus\Event;
 use Dba\DddSkeleton\Shared\Domain\Bus\Event\DomainEvent;
 use Dba\DddSkeleton\Shared\Domain\Bus\Event\DomainEventSubscriber;
 use Dba\DddSkeleton\Shared\Infrastructure\Bus\Event\Laravel\LaravelEventBus;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LaravelEventBusTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_should_publish_events_to_subscribers(): void
     {
         $event = new StubDomainEvent('aggregate-id');
@@ -24,9 +25,9 @@ final class LaravelEventBusTest extends TestCase
     }
 }
 
-final class StubDomainEvent extends DomainEvent
+final readonly class StubDomainEvent extends DomainEvent
 {
-    public static function fromPrimitives(string $aggregateId, array $body, string $eventId, string $occurredOn): DomainEvent
+    public static function fromPrimitives(string $aggregateId, array $body, string $eventId, string $occurredOn): static
     {
         return new self($aggregateId, $eventId, $occurredOn);
     }

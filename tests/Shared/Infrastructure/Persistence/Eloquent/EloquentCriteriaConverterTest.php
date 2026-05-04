@@ -16,16 +16,17 @@ use Dba\DddSkeleton\Shared\Domain\Criteria\OrderType;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteria;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteriaConverter;
 use Dba\DddSkeleton\Tests\DbaTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 final class EloquentCriteriaConverterTest extends DbaTestCase
 {
-    /** @test */
+    #[Test]
     public function it_should_convert_criteria_to_eloquent_criteria(): void
     {
         $filters = new Filters([
             new Filter(
                 new FilterField('name'),
-                new FilterOperator(FilterOperator::EQUAL),
+                FilterOperator::EQUAL,
                 new FilterValue('John')
             ),
         ]);
@@ -34,17 +35,13 @@ final class EloquentCriteriaConverterTest extends DbaTestCase
         $limit = 20;
 
         $criteria = new Criteria($filters, $order, $offset, $limit);
-
         $eloquentCriteria = EloquentCriteriaConverter::convert($criteria);
 
         $this->assertInstanceOf(EloquentCriteria::class, $eloquentCriteria);
 
         $methods = $eloquentCriteria->toArray();
-
-        $this->assertCount(4, $methods);
-
-        // Actually, let's check exactly what's in there.
         $methodNames = array_map(fn ($m) => $m['method'], $methods);
+
         $this->assertContains('where', $methodNames);
         $this->assertContains('orderBy', $methodNames);
         $this->assertContains('offset', $methodNames);

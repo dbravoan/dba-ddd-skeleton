@@ -24,7 +24,6 @@ abstract class Enum implements Stringable
         $this->ensureIsBetweenAcceptedValues($value);
     }
 
-
     abstract protected function throwExceptionForInvalidValue(mixed $value): void;
 
     /** @param array<mixed> $args */
