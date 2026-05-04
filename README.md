@@ -116,21 +116,24 @@ Shared/
 │   │   ├── Event/       DomainEvent, EventBus, DomainEventSubscriber (interfaces)
 │   │   └── Query/       Query, QueryBus, QueryHandler, Response (interfaces)
 │   ├── Criteria/        Criteria, Filters, FilterGroup, Order (pattern completo)
-│   ├── Security/        SqlInjectionProtector
-│   └── ValueObject/     Uuid, StringValueObject, IntValueObject, etc.
+│   └── ValueObject/     Uuid, StringValueObject, IntValueObject, EmailValueObject,
+│                        UrlValueObject, MoneyValueObject, DateTimeValueObject, etc.
 ├── Infrastructure/
 │   ├── Bus/
 │   │   ├── Command/     LaravelCommandBus, CommandNotRegisteredError
 │   │   ├── Event/
-│   │   │   └── Laravel/ LaravelEventBus, LaravelQueueEventBus, ProcessDomainEventJob
+│   │   │   └── Laravel/ LaravelEventBus (sync), LaravelQueueEventBus (async),
+│   │   │                ProcessDomainEventJob
 │   │   └── Query/       LaravelQueryBus, QueryNotRegisteredError
 │   ├── Criteria/        RequestCriteriaBuilder
-│   ├── Laravel/         ApiController, Providers/RepositoryServiceProvider
+│   ├── Laravel/         ApiController, Providers/DbaServiceProvider (base),
+│   │                    Providers/RepositoryServiceProvider (base)
 │   └── Persistence/
 │       ├── Eloquent/    EloquentRepository, EloquentCriteriaConverter
+│       ├── File/        FileRepository (JSON / CSV / XML)
 │       └── QueryBuilder/ QueryBuilderRepository, QueryBuilderCriteriaConverter
 └── Console/
-    └── Commands/        MakeModuleCommand + 25 stubs
+    └── Commands/        MakeModuleCommand + stubs
 ```
 
 ---
@@ -360,13 +363,36 @@ final class RepositoryServiceProvider extends ServiceProvider
 
 > **Tip**: Usa un array declarativo `$repositories` en lugar de múltiples `$this->app->bind()`. Así se ve de un vistazo qué implementaciones usa tu proyecto.
 
-### DomainServiceProvider
+### DomainServiceProvider — opción A: auto-discovery (recomendado)
 
-Responsable de registrar los **Command Handlers**, **Query Handlers** y **Domain Event Subscribers** con sus tags correspondientes para que los buses los descubran.
+El paquete incluye `DbaServiceProvider`, una clase base que escanea automáticamente todos los archivos `*Handler.php` del directorio `Application/` de un módulo y los etiqueta según la interfaz que implementan (`CommandHandler`, `QueryHandler` o `DomainEventSubscriber`). Solo tienes que extenderla e indicar el contexto y módulo.
 
-```bash
-php artisan make:provider DomainServiceProvider
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use Dba\DddSkeleton\Shared\Infrastructure\Laravel\Providers\DbaServiceProvider;
+
+final class ProductServiceProvider extends DbaServiceProvider
+{
+    protected function contextName(): string { return 'Catalog'; }
+    protected function moduleName(): string  { return 'Product'; }
+}
 ```
+
+Esto registrará automáticamente `src/Catalog/Product/Application/**/*Handler.php` con el tag correcto. No es necesario listar los handlers manualmente.
+
+> **Etiquetas usadas por los buses** — las tres etiquetas que el paquete reconoce son:
+> - `dba_ddd.command_handler` → `LaravelCommandBus`
+> - `dba_ddd.query_handler`   → `LaravelQueryBus`
+> - `dba_ddd.domain_event_subscriber` → `LaravelEventBus` / `LaravelQueueEventBus`
+
+### DomainServiceProvider — opción B: registro manual
+
+Si necesitas más control (handlers fuera de la convención de carpetas, subscribers de eventos externos, etc.) puedes registrar los tags manualmente:
 
 ```php
 <?php
@@ -403,29 +429,16 @@ final class DomainServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->registerCommandHandlers();
-        $this->registerQueryHandlers();
-        $this->registerDomainEventSubscribers();
-    }
-
-    private function registerCommandHandlers(): void
-    {
-        foreach ($this->commandHandlers as $handler) {
-            $this->app->tag($handler, 'dba_ddd.command_handler');
+        foreach ($this->commandHandlers as $h) {
+            $this->app->tag($h, 'dba_ddd.command_handler');
         }
-    }
 
-    private function registerQueryHandlers(): void
-    {
-        foreach ($this->queryHandlers as $handler) {
-            $this->app->tag($handler, 'dba_ddd.query_handler');
+        foreach ($this->queryHandlers as $h) {
+            $this->app->tag($h, 'dba_ddd.query_handler');
         }
-    }
 
-    private function registerDomainEventSubscribers(): void
-    {
-        foreach ($this->domainEventSubscribers as $subscriber) {
-            $this->app->tag($subscriber, 'dba_ddd.domain_event_subscriber');
+        foreach ($this->domainEventSubscribers as $s) {
+            $this->app->tag($s, 'dba_ddd.domain_event_subscriber');
         }
     }
 }
@@ -433,22 +446,22 @@ final class DomainServiceProvider extends ServiceProvider
 
 ### Registrar los providers
 
-Añade ambos en tu `bootstrap/providers.php` (Laravel 11+) o `config/app.php`:
+Añade tus providers en `bootstrap/providers.php` (Laravel 11+) o `config/app.php`:
 
 ```php
 // bootstrap/providers.php (Laravel 11+)
 return [
     App\Providers\RepositoryServiceProvider::class,
-    App\Providers\DomainServiceProvider::class,
+    App\Providers\ProductServiceProvider::class,  // DbaServiceProvider auto-discovery
+    // o bien App\Providers\DomainServiceProvider::class para registro manual
 ];
 ```
 
 ```php
 // config/app.php (Laravel 10)
 'providers' => [
-    // ...
     App\Providers\RepositoryServiceProvider::class,
-    App\Providers\DomainServiceProvider::class,
+    App\Providers\ProductServiceProvider::class,
 ],
 ```
 
@@ -486,6 +499,13 @@ final class SendWelcomeEmailOnUserCreated implements DomainEventSubscriber
 
 ## ⚡ EventBus: síncrono vs asíncrono
 
+| | `LaravelEventBus` | `LaravelQueueEventBus` |
+|---|---|---|
+| **Ejecución** | Inmediata, mismo proceso | Worker de cola (Redis, SQS, DB…) |
+| **Binding por defecto** | ✅ sí | ❌ sobreescribir |
+| **Reintentos automáticos** | ❌ | ✅ (configurable en el Job) |
+| **Ideal para** | Logs, caché, contadores | Emails, PDFs, APIs externas |
+
 ### Modo síncrono (por defecto)
 
 El `LaravelEventBus` que registra el paquete es **síncrono**: cuando el repositorio llama a `publishEvents()`, los subscribers se ejecutan **inmediatamente** en el mismo proceso PHP.
@@ -511,17 +531,16 @@ sequenceDiagram
 
 Para tareas pesadas (enviar emails, generar PDFs, llamar a APIs externas), el paquete incluye `LaravelQueueEventBus` y `ProcessDomainEventJob`. Los eventos se serializan a primitivos para un transporte seguro por colas y se reconstruyen vía `fromPrimitives()` en el worker.
 
-**Activar el modo asíncrono** — solo sobreescribe el binding de `EventBus` en tu `DomainServiceProvider`:
+**Activar el modo asíncrono** — sobreescribe el binding de `EventBus` en tu provider:
 
 ```php
 use Dba\DddSkeleton\Shared\Domain\Bus\Event\EventBus;
 use Dba\DddSkeleton\Shared\Infrastructure\Bus\Event\Laravel\LaravelQueueEventBus;
 
-// Sobreescribir el binding del paquete con la versión async
-$this->app->singleton(EventBus::class, function ($app) {
+$this->app->singleton(EventBus::class, function () {
     return new LaravelQueueEventBus(
-        queue: 'domain_events',       // Cola donde se envían los jobs
-        connection: null,              // null = driver por defecto (redis, sqs, etc.)
+        queue: 'domain_events',  // nombre de la cola (QUEUE_CONNECTION en .env)
+        connection: null,        // null = driver por defecto; 'redis', 'sqs', etc.
     );
 });
 ```
