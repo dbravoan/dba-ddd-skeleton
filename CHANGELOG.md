@@ -7,7 +7,29 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-## [2.1.0] — 2026-05-04
+## [2.1.1] — 2026-05-05
+
+### Fixed
+
+- **CI matrix — `orchestra/testbench` version mismatch** — the workflow was passing
+  `orchestra/testbench:^10.0` for all Laravel versions, but testbench `^10.x` requires
+  Laravel 12, causing the Laravel 10/11 matrix legs to fail with an unresolvable conflict.
+  The correct mapping is:
+
+  | Laravel | testbench |
+  |---|---|
+  | 10 | `^8.0` |
+  | 11 | `^9.0` |
+  | 12 | `^10.0` |
+
+  The workflow now uses an explicit `matrix.include` list with the correct `testbench`
+  version per Laravel version. Laravel 10 legs are limited to PHP 8.2/8.3 (PHP 8.4 was
+  not supported by Laravel 10). `composer.json` `require-dev` widened to
+  `^8.0|^9.0|^10.0|^11.0`.
+
+---
+
+
 
 ### Fixed
 
