@@ -48,12 +48,14 @@ final class EloquentUserRepository extends EloquentRepository implements UserRep
         /** @var EloquentCriteria<UserModel> $eloquentCriteria */
         $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, $this->toEloquentFields);
 
-        $models = $this->matching($eloquentCriteria)->get();
+        /** @var array<int, User> $result */
+        $result = $this->matching($eloquentCriteria)
+            ->get()
+            ->map(fn (UserModel $model) => $this->toDomain($model->toArray()))
+            ->values()
+            ->all();
 
-        return array_map(
-            fn (UserModel $model) => $this->toDomain($model->toArray()),
-            $models->all()
-        );
+        return $result;
     }
 
     public function countByCriteria(Criteria $criteria): int

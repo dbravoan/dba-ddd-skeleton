@@ -4,3 +4,10 @@ parameters:
         - src
     excludePaths:
         - src/Console/Commands/Stubs/*
+    # Builder, Paginator, LengthAwarePaginator and Query\Expression are not
+    # declared as generic in Laravel 10 stubs. The annotations are correct for
+    # Laravel 11+. Suppress false positives on L10 legs without breaking L11+
+    # (reportUnmatchedIgnoredErrors prevents a failure when the error never fires).
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - identifier: generics.notGeneric

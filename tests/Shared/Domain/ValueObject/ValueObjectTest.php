@@ -15,8 +15,8 @@ final class ValueObjectTest extends TestCase
     #[Test]
     public function it_should_store_a_bool_value(): void
     {
-        $trueValue = new readonly class(true) extends BoolValueObject {};
-        $falseValue = new readonly class(false) extends BoolValueObject {};
+        $trueValue = new StubBoolValueObject(true);
+        $falseValue = new StubBoolValueObject(false);
 
         $this->assertTrue($trueValue->value());
         $this->assertTrue($trueValue->isTrue());
@@ -30,8 +30,8 @@ final class ValueObjectTest extends TestCase
     #[Test]
     public function it_should_store_an_int_value(): void
     {
-        $value1 = new readonly class(10) extends IntValueObject {};
-        $value2 = new readonly class(5) extends IntValueObject {};
+        $value1 = new StubIntValueObject(10);
+        $value2 = new StubIntValueObject(5);
 
         $this->assertEquals(10, $value1->value());
         $this->assertTrue($value1->isBiggerThan($value2));
@@ -41,11 +41,17 @@ final class ValueObjectTest extends TestCase
     #[Test]
     public function it_should_store_a_float_value(): void
     {
-        $value1 = new readonly class(10.5) extends FloatValueObject {};
-        $value2 = new readonly class(5.5) extends FloatValueObject {};
+        $value1 = new StubFloatValueObject(10.5);
+        $value2 = new StubFloatValueObject(5.5);
 
         $this->assertEquals(10.5, $value1->value());
         $this->assertTrue($value1->isBiggerThan($value2));
         $this->assertTrue($value2->isSmallerThan($value1));
     }
 }
+
+final readonly class StubBoolValueObject extends BoolValueObject {}
+
+final readonly class StubIntValueObject extends IntValueObject {}
+
+final readonly class StubFloatValueObject extends FloatValueObject {}

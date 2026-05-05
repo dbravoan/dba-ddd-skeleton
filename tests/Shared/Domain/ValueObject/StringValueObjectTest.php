@@ -14,7 +14,7 @@ final class StringValueObjectTest extends TestCase
     public function it_should_store_a_string_value(): void
     {
         $value = 'test-value';
-        $stringValueObject = new readonly class($value) extends StringValueObject {};
+        $stringValueObject = new StubAnonymousStringValueObject($value);
 
         $this->assertEquals($value, $stringValueObject->value());
     }
@@ -29,5 +29,7 @@ final class StringValueObjectTest extends TestCase
         $this->assertEquals($value, $stringValueObject->value());
     }
 }
+
+final readonly class StubAnonymousStringValueObject extends StringValueObject {}
 
 final readonly class StubStringValueObject extends StringValueObject {}

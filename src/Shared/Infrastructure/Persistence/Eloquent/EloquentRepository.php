@@ -212,9 +212,11 @@ abstract class EloquentRepository
         /** @var TModel $model */
         $model = $this->findOrFail($id);
 
-        return tap($model, static function (Model $instance) use ($attributes) {
+        tap($model, static function (Model $instance) use ($attributes) {
             $instance->fill($attributes)->saveOrFail();
         });
+
+        return $model;
     }
 
     /**
@@ -230,9 +232,11 @@ abstract class EloquentRepository
         /** @var TModel $model */
         $model = $this->findOrFail($id);
 
-        return tap($model, static function (Model $instance) use ($attributes) {
+        tap($model, static function (Model $instance) use ($attributes) {
             $instance->forceFill($attributes)->saveOrFail();
         });
+
+        return $model;
     }
 
     /**
