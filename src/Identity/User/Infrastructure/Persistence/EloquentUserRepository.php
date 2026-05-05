@@ -11,6 +11,7 @@ use Dba\DddSkeleton\Shared\Domain\Criteria\Criteria;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteria;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentCriteriaConverter;
 use Dba\DddSkeleton\Shared\Infrastructure\Persistence\Eloquent\EloquentRepository;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @extends EloquentRepository<UserModel>
@@ -48,9 +49,11 @@ final class EloquentUserRepository extends EloquentRepository implements UserRep
         /** @var EloquentCriteria<UserModel> $eloquentCriteria */
         $eloquentCriteria = EloquentCriteriaConverter::convert($criteria, $this->toEloquentFields);
 
+        /** @var Collection<int, UserModel> $models */
+        $models = $this->matching($eloquentCriteria)->get();
+
         /** @var array<int, User> $result */
-        $result = $this->matching($eloquentCriteria)
-            ->get()
+        $result = $models
             ->map(fn (UserModel $model) => $this->toDomain($model->toArray()))
             ->values()
             ->all();

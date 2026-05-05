@@ -8,11 +8,9 @@ use Illuminate\Database\Query\Expression as QueryExpression;
 
 /**
  * Wrapper around Laravel's Query Expression that guarantees a string cast
- * and a typed getValue() return. The @extends annotation uses the generic
- * form which is valid on Laravel 11+ (L10 stubs are not generic; the
- * generics.notGeneric PHPStan warning is suppressed in phpstan.neon).
+ * and a typed getValue() return.
  *
- * @extends QueryExpression<float|int|string>
+ * @extends QueryExpression<string|int|float>
  */
 class Expression extends QueryExpression
 {
