@@ -10,4 +10,10 @@ parameters:
     # (reportUnmatchedIgnoredErrors prevents a failure when the error never fires).
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
+        # Laravel 10 stubs do not declare Builder, Paginator, LengthAwarePaginator or
+        # Query\Expression as generic — suppress false positives on L10 legs.
         - identifier: generics.notGeneric
+        # Laravel 13 changed QueryExpression template bound to literal-string|int|float.
+        # Our @extends uses string|int|float (valid for L10–L12). PHPStan fires
+        # notSubtype only on the L13 leg; the annotation is intentionally wider.
+        - identifier: generics.notSubtype
